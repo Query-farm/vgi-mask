@@ -36,7 +36,7 @@
 
 use aes::Aes256;
 use fpe::ff1::{FlexibleNumeralString, FF1};
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use sha2::{Digest, Sha256};
 
 /// NIST FF1 minimum domain size: the function refuses `radix^len < 1_000_000`.
