@@ -1,0 +1,109 @@
+# name: test/sql/mask.test
+# group: [vgi_mask]
+#
+# Deterministic tokenization (mask_token) and irreversible redaction
+# (mask_redact), plus mask_version. Tokens must be stable per input+key (so they
+# preserve join keys) and key-sensitive; redaction output is asserted exactly.
+
+require-env VGI_MASK_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'mask' AS mask (TYPE vgi, LOCATION '${VGI_MASK_WORKER}');
+
+statement ok
+SET search_path = 'mask.main';
+
+# --- tokenization: deterministic, joinable, key-sensitive ---
+
+# Same input + key -> identical token (referential integrity for joins).
+query T
+SELECT mask_token('customer-42', 'k') = mask_token('customer-42', 'k');
+----
+true
+
+# Different inputs -> different tokens.
+query T
+SELECT mask_token('customer-42', 'k') <> mask_token('customer-43', 'k');
+----
+true
+
+# Different keys -> different tokens for the same input.
+query T
+SELECT mask_token('customer-42', 'k1') <> mask_token('customer-42', 'k2');
+----
+true
+
+# Token is 32 lowercase hex characters (128-bit).
+query T
+SELECT regexp_full_match(mask_token('customer-42', 'k'), '[0-9a-f]{32}');
+----
+true
+
+# A join across two "tables" tokenized with the same key still matches.
+query I
+WITH t1 AS (SELECT 'acct-1' AS id UNION ALL SELECT 'acct-2'),
+     t2 AS (SELECT 'acct-1' AS id UNION ALL SELECT 'acct-3')
+SELECT COUNT(*)
+FROM t1 JOIN t2 ON mask_token(t1.id, 'k') = mask_token(t2.id, 'k');
+----
+1
+
+# NULL input -> NULL.
+query T
+SELECT mask_token(NULL, 'k');
+----
+NULL
+
+# Empty key -> error.
+statement error
+SELECT mask_token('x', '');
+----
+
+# --- redaction: exact outputs ---
+
+query T
+SELECT mask_redact('1234567890', 'last4');
+----
+******7890
+
+query T
+SELECT mask_redact('1234567890', 'first4');
+----
+1234******
+
+query T
+SELECT mask_redact('1234567890', 'all');
+----
+**********
+
+query T
+SELECT mask_redact('alice@example.com', 'email');
+----
+a****@example.com
+
+# NULL input -> NULL.
+query T
+SELECT mask_redact(NULL, 'last4');
+----
+NULL
+
+# Unknown mode -> error.
+statement error
+SELECT mask_redact('x', 'bogus');
+----
+
+# --- version is non-empty ---
+
+query T
+SELECT length(mask_version()) > 0;
+----
+true
+
+statement ok
+USE memory;
+
+statement ok
+DETACH mask;

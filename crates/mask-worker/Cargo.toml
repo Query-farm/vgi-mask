@@ -1,0 +1,27 @@
+[package]
+name = "mask-worker"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "VGI worker bringing format-preserving encryption, deterministic tokenization, and partial redaction of sensitive values to DuckDB over Apache Arrow"
+
+[[bin]]
+name = "mask-worker"
+path = "src/main.rs"
+
+[dependencies]
+vgi.workspace = true
+vgi-rpc.workspace = true
+arrow-array.workspace = true
+arrow-buffer.workspace = true
+arrow-schema.workspace = true
+fpe.workspace = true
+aes.workspace = true
+sha2.workspace = true
+hmac.workspace = true
+hex.workspace = true
+log = "0.4"
+env_logger = "0.11"

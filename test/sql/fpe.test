@@ -1,0 +1,145 @@
+# name: test/sql/fpe.test
+# group: [vgi_mask]
+#
+# Format-preserving encryption end-to-end through DuckDB: round-trip correctness
+# (mask_unfpe(mask_fpe(x)) == x), format/shape preservation, determinism, key
+# sensitivity, and the NULL/error policy. Ciphertext is key-derivation-dependent,
+# so we assert *properties* (round-trip, shape) rather than hardcoded values.
+
+require-env VGI_MASK_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'mask' AS mask (TYPE vgi, LOCATION '${VGI_MASK_WORKER}');
+
+statement ok
+SET search_path = 'mask.main';
+
+# --- round-trip: every format recovers the original under the same key ---
+
+query T
+SELECT mask_unfpe(mask_fpe('4012888888881881', 'card', 'k'), 'card', 'k');
+----
+4012888888881881
+
+query T
+SELECT mask_unfpe(mask_fpe('123-45-6789', 'ssn', 'k'), 'ssn', 'k');
+----
+123-45-6789
+
+query T
+SELECT mask_unfpe(mask_fpe('8675309123', 'digits', 'k'), 'digits', 'k');
+----
+8675309123
+
+query T
+SELECT mask_unfpe(mask_fpe('AKIAIOSFODNN7EXAMPLE', 'alnum', 'k'), 'alnum', 'k');
+----
+AKIAIOSFODNN7EXAMPLE
+
+query T
+SELECT mask_unfpe(mask_fpe('alice.smith@example.com', 'email', 'k'), 'email', 'k');
+----
+alice.smith@example.com
+
+# --- format preservation ---
+
+# Card output: 16 digits, no non-digit characters.
+query T
+SELECT regexp_full_match(mask_fpe('4012888888881881', 'card', 'k'), '[0-9]{16}');
+----
+true
+
+# Card output: Luhn-valid. Compute the Luhn checksum in SQL and assert it is 0.
+# DuckDB strings are 1-indexed; position from the right is (16 - g), and every
+# second digit from the right (excluding the check digit) is doubled.
+query I
+WITH c AS (SELECT mask_fpe('4012888888881881', 'card', 'k') AS pan)
+SELECT SUM(
+         CASE
+           WHEN (16 - g) % 2 = 1
+           THEN CASE WHEN CAST(pan[g] AS INTEGER) * 2 > 9
+                     THEN CAST(pan[g] AS INTEGER) * 2 - 9
+                     ELSE CAST(pan[g] AS INTEGER) * 2 END
+           ELSE CAST(pan[g] AS INTEGER)
+         END
+       ) % 10
+FROM c, generate_series(1, 16) AS t(g);
+----
+0
+
+# SSN output keeps the dash shape (NNN-NN-NNNN).
+query T
+SELECT regexp_full_match(mask_fpe('123-45-6789', 'ssn', 'k'), '[0-9]{3}-[0-9]{2}-[0-9]{4}');
+----
+true
+
+# Email output keeps the @domain.
+query T
+SELECT mask_fpe('alice.smith@example.com', 'email', 'k') LIKE '%@example.com';
+----
+true
+
+# Digits output is the same length, all digits.
+query T
+SELECT regexp_full_match(mask_fpe('8675309123', 'digits', 'k'), '[0-9]{10}');
+----
+true
+
+# --- encryption actually changes the value ---
+
+query T
+SELECT mask_fpe('4012888888881881', 'card', 'k') <> '4012888888881881';
+----
+true
+
+# --- determinism: same input+key is stable ---
+
+query T
+SELECT mask_fpe('8675309123', 'digits', 'k') = mask_fpe('8675309123', 'digits', 'k');
+----
+true
+
+# --- key sensitivity: different keys differ ---
+
+query T
+SELECT mask_fpe('8675309123', 'digits', 'key-one') <> mask_fpe('8675309123', 'digits', 'key-two');
+----
+true
+
+# --- referential integrity: equal plaintext -> equal ciphertext (joinable) ---
+
+query T
+SELECT a = b FROM (
+  SELECT mask_fpe('5555555555554444', 'card', 'k') AS a,
+         mask_fpe('5555555555554444', 'card', 'k') AS b
+);
+----
+true
+
+# --- NULL policy: NULL input -> NULL output ---
+
+query T
+SELECT mask_fpe(NULL, 'card', 'k');
+----
+NULL
+
+# --- error policy: unknown format raises an error ---
+
+statement error
+SELECT mask_fpe('123456', 'bogus', 'k');
+----
+
+# --- error policy: empty key raises an error ---
+
+statement error
+SELECT mask_fpe('123456', 'digits', '');
+----
+
+statement ok
+USE memory;
+
+statement ok
+DETACH mask;

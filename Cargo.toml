@@ -1,0 +1,36 @@
+[workspace]
+resolver = "2"
+members = ["crates/mask-worker"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.86"
+license = "MIT"
+authors = ["Query Farm LLC <hello@query.farm>"]
+repository = "https://github.com/Query-farm/vgi-mask"
+
+[workspace.dependencies]
+# VGI Rust SDK (worker side), published on crates.io. Pulls in vgi-rpc 0.2 and
+# arrow 58 transitively; keep arrow/vgi-rpc here in lockstep with vgi's pins so a
+# single arrow/vgi-rpc resolves.
+vgi = "0.5.0"
+vgi-rpc = { version = "0.2.0", default-features = false, features = ["macros", "http"] }
+arrow-array = "58"
+arrow-buffer = "58"
+arrow-schema = "58"
+
+# Cryptography. All permissively licensed (MIT OR Apache-2.0):
+#   fpe   — NIST SP 800-38G FF1 format-preserving encryption (str4d/fpe)
+#   aes   — AES-256 block cipher used as FF1's round function
+#   sha2  — SHA-256, used to derive a fixed 256-bit AES key from the key string
+#   hmac  — HMAC-SHA-256, used for deterministic tokenization
+#   subtle / hex — constant-time compare helpers / hex encoding
+fpe = "0.6"
+aes = "0.8"
+sha2 = "0.10"
+hmac = "0.12"
+hex = "0.4"
+
+[profile.release]
+opt-level = 2
