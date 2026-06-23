@@ -28,8 +28,8 @@ arrow-schema = "59"
 #   subtle / hex — constant-time compare helpers / hex encoding
 fpe = "0.6"
 aes = "0.8"
-sha2 = "0.10"
-hmac = "0.12"
+sha2 = "0.11"
+hmac = "0.13"
 hex = "0.4"
 
 [profile.release]
