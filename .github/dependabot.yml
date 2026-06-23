@@ -12,6 +12,18 @@ updates:
       arrow:
         patterns:
           - "arrow*"
+    ignore:
+      # FF1 format-preserving encryption runs through `fpe`, which still pins
+      # aes ^0.8 / cipher ^0.4. Bumping our direct `aes` past 0.8 forces two
+      # incompatible aes/cipher majors into the tree (one via fpe, one direct)
+      # and fails to compile. Hold aes on 0.8.x until `fpe` releases against
+      # cipher 0.5; then bump fpe + aes together. No security driver: aes 0.8
+      # has no advisory and 0.8->0.9 is pure trait-API churn. (Patches within
+      # 0.8.x are still allowed.)
+      - dependency-name: "aes"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-major"
     commit-message:
       prefix: "deps"
 
