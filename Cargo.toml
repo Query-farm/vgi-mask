@@ -27,7 +27,7 @@ arrow-schema = "59"
 #   hmac  — HMAC-SHA-256, used for deterministic tokenization
 #   subtle / hex — constant-time compare helpers / hex encoding
 fpe = "0.6"
-aes = "0.8"
+aes = "0.9"
 sha2 = "0.11"
 hmac = "0.13"
 hex = "0.4"
