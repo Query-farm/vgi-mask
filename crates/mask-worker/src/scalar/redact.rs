@@ -8,7 +8,10 @@ use std::sync::Arc;
 use arrow_array::builder::StringBuilder;
 use arrow_array::{ArrayRef, RecordBatch};
 use arrow_schema::DataType;
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams, ScalarFunction};
+use vgi::{
+    ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams,
+    ScalarFunction,
+};
 use vgi_rpc::{Result, RpcError};
 
 use crate::arrow_io::text_str;
@@ -28,6 +31,13 @@ impl ScalarFunction for MaskRedact {
                           domain, 'all' stars everything"
                 .into(),
             return_type: Some(DataType::Utf8),
+            examples: vec![FunctionExample {
+                sql: "SELECT mask.main.mask_redact('4012888888881881', 'last4');".into(),
+                description: "Irreversibly redact a card number, keeping only the last four \
+                              digits (************1881)."
+                    .into(),
+                expected_output: None,
+            }],
             ..Default::default()
         }
     }

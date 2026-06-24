@@ -11,7 +11,10 @@ use std::sync::Arc;
 use arrow_array::builder::StringBuilder;
 use arrow_array::{ArrayRef, RecordBatch};
 use arrow_schema::DataType;
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams, ScalarFunction};
+use vgi::{
+    ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams,
+    ScalarFunction,
+};
 use vgi_rpc::{Result, RpcError};
 
 use crate::arrow_io::text_str;
@@ -31,6 +34,14 @@ impl ScalarFunction for MaskToken {
                           Not reversible."
                 .into(),
             return_type: Some(DataType::Utf8),
+            examples: vec![FunctionExample {
+                sql: "SELECT mask.main.mask_token('customer-42', 'my-secret-key');".into(),
+                description: "Produce a stable, non-reversible pseudonym for an account ID; the \
+                              same input and key always yield the same token, so it stays \
+                              joinable across tables."
+                    .into(),
+                expected_output: None,
+            }],
             ..Default::default()
         }
     }

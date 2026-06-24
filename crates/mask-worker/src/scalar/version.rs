@@ -4,7 +4,10 @@ use std::sync::Arc;
 
 use arrow_array::{ArrayRef, RecordBatch, StringArray};
 use arrow_schema::DataType;
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams, ScalarFunction};
+use vgi::{
+    ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams,
+    ScalarFunction,
+};
 use vgi_rpc::{Result, RpcError};
 
 pub struct MaskVersion;
@@ -18,6 +21,11 @@ impl ScalarFunction for MaskVersion {
         FunctionMetadata {
             description: "Returns the mask worker version string".into(),
             return_type: Some(DataType::Utf8),
+            examples: vec![FunctionExample {
+                sql: "SELECT mask.main.mask_version();".into(),
+                description: "Return the mask worker's version string.".into(),
+                expected_output: None,
+            }],
             ..Default::default()
         }
     }

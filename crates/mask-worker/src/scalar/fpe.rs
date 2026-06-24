@@ -21,7 +21,10 @@ use std::sync::Arc;
 use arrow_array::builder::StringBuilder;
 use arrow_array::{ArrayRef, RecordBatch};
 use arrow_schema::DataType;
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams, ScalarFunction};
+use vgi::{
+    ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams,
+    ScalarFunction,
+};
 use vgi_rpc::{Result, RpcError};
 
 use crate::arrow_io::text_str;
@@ -84,6 +87,14 @@ impl ScalarFunction for MaskFpe {
                           (card/ssn/digits/alnum/email) and key; output keeps the input shape"
                 .into(),
             return_type: Some(DataType::Utf8),
+            examples: vec![FunctionExample {
+                sql: "SELECT mask.main.mask_fpe('4012888888881881', 'card', 'my-secret-key');"
+                    .into(),
+                description: "Format-preserving encrypt a credit-card number; the result is a \
+                              different but still Luhn-valid 16-digit card."
+                    .into(),
+                expected_output: None,
+            }],
             ..Default::default()
         }
     }
@@ -114,6 +125,16 @@ impl ScalarFunction for MaskUnfpe {
                           format profile and key"
                 .into(),
             return_type: Some(DataType::Utf8),
+            examples: vec![FunctionExample {
+                sql: "SELECT mask.main.mask_unfpe(\
+                      mask.main.mask_fpe('123-45-6789', 'ssn', 'my-secret-key'), \
+                      'ssn', 'my-secret-key');"
+                    .into(),
+                description: "Round-trip an SSN: mask_unfpe reverses mask_fpe under the same \
+                              format and key, recovering '123-45-6789'."
+                    .into(),
+                expected_output: None,
+            }],
             ..Default::default()
         }
     }
