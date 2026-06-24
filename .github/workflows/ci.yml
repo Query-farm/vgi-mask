@@ -34,7 +34,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Set up sccache
-        uses: mozilla-actions/sccache-action@v0.0.9
+        uses: mozilla-actions/sccache-action@v0.0.10
 
       - name: Format check
         run: cargo fmt --all -- --check
@@ -95,7 +95,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Set up sccache
-        uses: mozilla-actions/sccache-action@v0.0.9
+        uses: mozilla-actions/sccache-action@v0.0.10
 
       - name: Build worker (release)
         # The `http` transport needs the `vgi-rpc` `http` feature; the workspace
