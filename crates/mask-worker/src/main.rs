@@ -58,7 +58,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                     .to_string(),
             ),
             (
-                "vgi.description_llm".to_string(),
+                "vgi.doc_llm".to_string(),
                 "Mask sensitive values in SQL three ways: (1) format-preserving encryption \
                  (mask_fpe / mask_unfpe) that reversibly encrypts a value under a key while \
                  keeping its shape — a 16-digit card stays a Luhn-valid 16-digit card, an SSN \
@@ -72,7 +72,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                     .to_string(),
             ),
             (
-                "vgi.description_md".to_string(),
+                "vgi.doc_md".to_string(),
                 "# mask\n\nReversible format-preserving encryption, deterministic tokenization, \
                  and irreversible partial redaction of sensitive values over Apache Arrow.\n\n\
                  Scalars: `mask_fpe`, `mask_unfpe`, `mask_token`, `mask_redact`, \
@@ -123,17 +123,25 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                         .to_string(),
                 ),
                 (
-                    "vgi.description_llm".to_string(),
-                    "Data-masking functions: format-preserving encrypt/decrypt sensitive values \
-                     while preserving their shape (mask_fpe / mask_unfpe), produce stable \
-                     non-reversible pseudonyms (mask_token), and irreversibly redact values \
-                     (mask_redact)."
+                    "vgi.doc_llm".to_string(),
+                    "The `main` schema of the mask worker. It groups the data-masking scalar \
+                     functions: `mask_fpe` / `mask_unfpe` (reversible format-preserving \
+                     encrypt/decrypt that keeps a value's shape), `mask_token` (stable \
+                     non-reversible HMAC-SHA-256 pseudonyms that stay joinable across tables), \
+                     `mask_redact` (irreversible display masking), and `mask_version` \
+                     (diagnostics). Pick FPE when you must reverse the value, tokenization when \
+                     you need joinable pseudonyms, and redaction for one-way display masking."
                         .to_string(),
                 ),
                 (
-                    "vgi.description_md".to_string(),
-                    "Data-masking functions (format-preserving encryption, tokenization, \
-                     redaction) over Apache Arrow."
+                    "vgi.doc_md".to_string(),
+                    "# mask.main\n\nData-masking functions over Apache Arrow.\n\n\
+                     | function | kind |\n\
+                     |---|---|\n\
+                     | `mask_fpe` / `mask_unfpe` | reversible format-preserving encryption |\n\
+                     | `mask_token` | deterministic one-way tokenization |\n\
+                     | `mask_redact` | irreversible partial redaction |\n\
+                     | `mask_version` | worker version string |"
                         .to_string(),
                 ),
                 // VGI506 representative example queries for the schema.

@@ -44,14 +44,43 @@ impl ScalarFunction for MaskToken {
             }],
             tags: crate::meta::object_tags(
                 "Deterministic Tokenize Value",
-                "Produce a stable, non-reversible pseudonym for a value using HMAC-SHA-256 under a \
-                 secret key. The same input and key always yield the same hex token, so tokens \
-                 preserve referential integrity and stay joinable across tables, but the original \
-                 value cannot be recovered. Use for consistent pseudonymization of account IDs, \
-                 emails, and other identifiers. NULL input returns NULL; an empty key raises an \
-                 error.",
-                "Produce a stable, non-reversible HMAC-SHA-256 pseudonym, e.g. \
-                 `mask_token('customer-42', key)`. The same input+key always gives the same token.",
+                "## `mask_token(value, key)`\n\n\
+                 Produces a stable, **one-way pseudonym** for a value using **HMAC-SHA-256** under \
+                 a secret `key`, returned as a hex string. The mapping is deterministic: the same \
+                 `value` and `key` always yield the same token.\n\n\
+                 ### When to use\n\
+                 Choose tokenization when you need to de-identify an identifier *and* keep it \
+                 joinable. Because identical inputs map to identical tokens, you can replace an \
+                 account ID or email with its token in two different tables and still join on it — \
+                 referential integrity is preserved without ever exposing the original. Unlike \
+                 `mask_fpe`, this is **not reversible**; unlike `mask_redact`, it does not preserve \
+                 the input's shape.\n\n\
+                 ### Inputs\n\
+                 - `value` — the identifier to tokenize (VARCHAR). NULL passes through to NULL.\n\
+                 - `key` — secret key string; the HMAC key is domain-separated from the FPE key.\n\n\
+                 ### Output\n\
+                 A hexadecimal HMAC-SHA-256 token (VARCHAR). The original value cannot be \
+                 recovered from it.\n\n\
+                 ### Behavior & edge cases\n\
+                 - Deterministic and collision-resistant; same input+key ⇒ same token across runs \
+                 and tables, so it is safe for joins.\n\
+                 - **Caution:** deterministic tokens are frequency-analyzable on low-cardinality \
+                 columns — equal inputs always produce equal tokens.\n\
+                 - NULL input → NULL; an empty `key` raises an error.",
+                "# Deterministic Tokenize\n\n\
+                 `mask_token(value, key)` returns a stable, non-reversible HMAC-SHA-256 pseudonym \
+                 for a value, as a hex string.\n\n\
+                 ## Usage\n\n\
+                 ```sql\n\
+                 SELECT mask.main.mask_token('customer-42', 'my-secret-key');\n\
+                 ```\n\n\
+                 The same input and key always produce the same token, so tokens stay joinable \
+                 across tables.\n\n\
+                 ## Notes\n\n\
+                 - Tokens are one-way: the original value cannot be recovered (use `mask_fpe` if \
+                 you need reversibility).\n\
+                 - Deterministic output is frequency-analyzable on low-cardinality data.\n\
+                 - NULL in → NULL out; an empty key is an error.",
                 "mask_token, tokenize, tokenization, pseudonym, pseudonymization, HMAC, \
                  deterministic masking, joinable, referential integrity, de-identify, hash",
                 "scalar/token.rs",

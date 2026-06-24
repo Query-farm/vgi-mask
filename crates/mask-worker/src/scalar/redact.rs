@@ -55,13 +55,44 @@ impl ScalarFunction for MaskRedact {
     fn metadata(&self) -> FunctionMetadata {
         let mut tags = crate::meta::object_tags(
             "Irreversible Partial Redaction",
-            "Irreversibly partially mask a value. Mode 'last4' keeps only the last four \
-             characters (stars the rest), 'first4' keeps the first four, 'email' keeps the first \
-             local character plus the @domain, and 'all' stars everything. The original value \
-             cannot be recovered. Use for display masking of cards, SSNs, emails, and other PII. \
-             NULL input returns NULL; an unknown mode raises an error.",
-            "Irreversibly redact a value, e.g. `mask_redact('4012888888881881', 'last4')` → \
-             `************1881`. Modes: `last4`, `first4`, `email`, `all`.",
+            "## `mask_redact(value, mode)`\n\n\
+             Irreversibly **partially masks** a value for display, replacing the sensitive portion \
+             with `*` characters while keeping a small, non-secret hint visible. No key is \
+             involved and the original value cannot be recovered.\n\n\
+             ### When to use\n\
+             Use this for human-facing display masking — showing the last four digits of a card on \
+             a receipt, the first character of an email in a UI, or fully starring a column in an \
+             export. It is the simplest masking strategy; choose `mask_token` instead when you \
+             need joinable pseudonyms, or `mask_fpe` when you need to reverse the transform later.\n\n\
+             ### Inputs\n\
+             - `value` — the string to redact (VARCHAR). NULL passes through to NULL.\n\
+             - `mode` — redaction strategy (see below).\n\n\
+             ### Modes\n\
+             | mode | keeps | example |\n\
+             |---|---|---|\n\
+             | `last4` | last four characters | `4012888888881881` → `************1881` |\n\
+             | `first4` | first four characters | `4012888888881881` → `4012************` |\n\
+             | `email` | first local char + `@domain` | `alice@example.com` → `a****@example.com` |\n\
+             | `all` | nothing | `secret` → `******` |\n\n\
+             ### Behavior & edge cases\n\
+             - Irreversible: the starred characters are discarded, not encrypted.\n\
+             - NULL input → NULL; an unknown `mode` raises an error.",
+            "# Irreversible Partial Redaction\n\n\
+             `mask_redact(value, mode)` partially masks a value for display by starring out the \
+             sensitive portion. It is one-way — the original cannot be recovered.\n\n\
+             ## Usage\n\n\
+             ```sql\n\
+             SELECT mask.main.mask_redact('4012888888881881', 'last4'); -- ************1881\n\
+             SELECT mask.main.mask_redact('alice@example.com', 'email'); -- a****@example.com\n\
+             ```\n\n\
+             ## Modes\n\n\
+             - `last4` — keep only the last four characters.\n\
+             - `first4` — keep only the first four characters.\n\
+             - `email` — keep the first local character plus the `@domain`.\n\
+             - `all` — star out everything.\n\n\
+             ## Notes\n\n\
+             - For joinable pseudonyms use `mask_token`; for reversible masking use `mask_fpe`.\n\
+             - NULL in → NULL out; an unknown mode is an error.",
             "mask_redact, redact, redaction, partial masking, star out, last4, first4, mask email, \
              display masking, de-identify, irreversible, obfuscate",
             "scalar/redact.rs",

@@ -97,15 +97,47 @@ impl ScalarFunction for MaskFpe {
             }],
             tags: crate::meta::object_tags(
                 "Format-Preserving Encrypt Value",
-                "Reversibly encrypt a sensitive value under a secret key while preserving its \
-                 shape, so a 16-digit card stays a Luhn-valid 16-digit card, an SSN stays \
-                 SSN-shaped (dashes kept), an email keeps its @domain, and digit/alnum strings \
-                 keep their length. Choose the shape with the format profile \
-                 (card/ssn/digits/alnum/email). Reverse it with mask_unfpe under the same format \
-                 and key. NULL input returns NULL; an unknown format or empty key raises an error.",
-                "Format-preserving encrypt a value, keeping its shape, e.g. \
-                 `mask_fpe('4012888888881881', 'card', key)` → another Luhn-valid 16-digit card. \
-                 Reverse with `mask_unfpe`.",
+                "## `mask_fpe(value, format, key)`\n\n\
+                 Reversibly encrypts a sensitive string under a secret `key` using **FF1 \
+                 format-preserving encryption** (FF1 over AES-256), so the ciphertext keeps the \
+                 *shape* of the input and can be substituted wherever the original was used.\n\n\
+                 ### When to use\n\
+                 Reach for this when you need to de-identify PII but downstream consumers still \
+                 expect the original format — masked views over cards/SSNs/emails, generating \
+                 referentially-consistent test data, or sharing data while keeping it reversible \
+                 for authorized holders of the key. If you never need to recover the value, prefer \
+                 `mask_token` (one-way pseudonym) or `mask_redact` (display masking).\n\n\
+                 ### Inputs\n\
+                 - `value` — the string to encrypt (VARCHAR). NULL passes through to NULL.\n\
+                 - `format` — shape profile: `card`, `ssn`, `digits`, `alnum`, or `email`.\n\
+                 - `key` — secret key string; the AES key is derived from it via SHA-256.\n\n\
+                 ### Output\n\
+                 A VARCHAR ciphertext with the same shape as the input. `card` stays a Luhn-valid \
+                 16-digit number, `ssn` keeps its dashes, `email` keeps `@domain` and FPEs only the \
+                 local part, `digits`/`alnum` keep their length and character class.\n\n\
+                 ### Behavior & edge cases\n\
+                 - Reverse with `mask_unfpe` under the **same** `format` and `key`.\n\
+                 - **Small-domain pass-through:** FF1 refuses domains below 1,000,000 (radix 10 ⇒ \
+                 fewer than 6 digits; radix 62 ⇒ fewer than 4 chars), so very short values are \
+                 returned unchanged — they still round-trip.\n\
+                 - NULL input → NULL; an unknown `format` or an empty `key` raises an error.",
+                "# Format-Preserving Encrypt\n\n\
+                 `mask_fpe(value, format, key)` reversibly encrypts a value while preserving its \
+                 shape, using FF1 format-preserving encryption over AES-256.\n\n\
+                 ## Usage\n\n\
+                 ```sql\n\
+                 -- card stays a Luhn-valid 16-digit number\n\
+                 SELECT mask.main.mask_fpe('4012888888881881', 'card', 'my-secret-key');\n\
+                 -- SSN keeps its dashes\n\
+                 SELECT mask.main.mask_fpe('123-45-6789', 'ssn', 'my-secret-key');\n\
+                 ```\n\n\
+                 The `format` profile selects the shape to preserve: `card`, `ssn`, `digits`, \
+                 `alnum`, or `email`.\n\n\
+                 ## Notes\n\n\
+                 - Reverse the transform with `mask_unfpe` under the same `format` and `key`.\n\
+                 - Values too short for FF1's minimum domain are passed through unchanged but still \
+                 round-trip.\n\
+                 - NULL in → NULL out; an unknown format or empty key is an error.",
                 "mask_fpe, format-preserving encryption, FPE, FF1, encrypt, tokenize card, mask \
                  credit card, mask SSN, mask email, reversible masking, de-identify, anonymize",
                 "scalar/fpe.rs",
@@ -152,12 +184,41 @@ impl ScalarFunction for MaskUnfpe {
             }],
             tags: crate::meta::object_tags(
                 "Format-Preserving Decrypt Value",
-                "Inverse of mask_fpe: recover the original sensitive value from a \
-                 format-preserving ciphertext, given the same format profile \
-                 (card/ssn/digits/alnum/email) and the same secret key used to encrypt it. NULL \
-                 input returns NULL; an unknown format or empty key raises an error.",
-                "Reverse `mask_fpe` to recover the original value, e.g. \
-                 `mask_unfpe(mask_fpe('123-45-6789', 'ssn', key), 'ssn', key)` → '123-45-6789'.",
+                "## `mask_unfpe(value, format, key)`\n\n\
+                 The **inverse of `mask_fpe`**: recovers the original plaintext from a \
+                 format-preserving ciphertext using FF1 decryption over AES-256.\n\n\
+                 ### When to use\n\
+                 Use this on the authorized side of a masking pipeline to recover a value that was \
+                 protected with `mask_fpe`. It only succeeds when you supply the **same** `format` \
+                 profile and the **same** `key` that produced the ciphertext — a different key \
+                 yields different (wrong) output, which is the point of keyed encryption.\n\n\
+                 ### Inputs\n\
+                 - `value` — the format-preserving ciphertext to reverse (VARCHAR).\n\
+                 - `format` — the profile used to encrypt: `card`, `ssn`, `digits`, `alnum`, or \
+                 `email`.\n\
+                 - `key` — the same secret key that was used with `mask_fpe`.\n\n\
+                 ### Output\n\
+                 The recovered original VARCHAR value.\n\n\
+                 ### Behavior & edge cases\n\
+                 - For `card`, decryption re-derives the Luhn check digit, so the original \
+                 16-digit number is reproduced exactly.\n\
+                 - Values that were passed through unchanged by `mask_fpe` (small-domain rule) \
+                 decrypt to themselves.\n\
+                 - NULL input → NULL; an unknown `format` or an empty `key` raises an error.",
+                "# Format-Preserving Decrypt\n\n\
+                 `mask_unfpe(value, format, key)` reverses `mask_fpe`, recovering the original \
+                 value from a format-preserving ciphertext.\n\n\
+                 ## Usage\n\n\
+                 ```sql\n\
+                 SELECT mask.main.mask_unfpe(\n\
+                 \u{20}\u{20}mask.main.mask_fpe('123-45-6789', 'ssn', 'k'), 'ssn', 'k');\n\
+                 -- => '123-45-6789'\n\
+                 ```\n\n\
+                 ## Notes\n\n\
+                 - You must pass the same `format` and `key` used to encrypt; a different key \
+                 produces incorrect output.\n\
+                 - `card` decryption re-derives the Luhn check digit so the round-trip is exact.\n\
+                 - NULL in → NULL out; an unknown format or empty key is an error.",
                 "mask_unfpe, decrypt, format-preserving decryption, FPE, FF1, reverse mask, \
                  unmask, recover original, round-trip",
                 "scalar/fpe.rs",
