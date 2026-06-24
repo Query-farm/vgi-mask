@@ -4,7 +4,9 @@
 
 <p align="center"><em>A <a href="https://query.farm">Query.Farm</a> VGI worker for DuckDB.</em></p>
 
-# vgi-mask
+# Format-Preserving Encryption, Tokenization & Redaction in DuckDB
+
+> **vgi-mask** · a [Query.Farm](https://query.farm) VGI worker
 
 A [VGI](https://query.farm) worker that brings **format-preserving encryption**,
 **deterministic tokenization**, and **partial redaction** of sensitive values to
