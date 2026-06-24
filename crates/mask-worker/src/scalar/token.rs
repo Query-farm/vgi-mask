@@ -42,6 +42,20 @@ impl ScalarFunction for MaskToken {
                     .into(),
                 expected_output: None,
             }],
+            tags: crate::meta::object_tags(
+                "Deterministic Tokenize Value",
+                "Produce a stable, non-reversible pseudonym for a value using HMAC-SHA-256 under a \
+                 secret key. The same input and key always yield the same hex token, so tokens \
+                 preserve referential integrity and stay joinable across tables, but the original \
+                 value cannot be recovered. Use for consistent pseudonymization of account IDs, \
+                 emails, and other identifiers. NULL input returns NULL; an empty key raises an \
+                 error.",
+                "Produce a stable, non-reversible HMAC-SHA-256 pseudonym, e.g. \
+                 `mask_token('customer-42', key)`. The same input+key always gives the same token.",
+                "mask_token, tokenize, tokenization, pseudonym, pseudonymization, HMAC, \
+                 deterministic masking, joinable, referential integrity, de-identify, hash",
+                "scalar/token.rs",
+            ),
             ..Default::default()
         }
     }

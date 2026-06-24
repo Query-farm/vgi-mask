@@ -26,6 +26,14 @@ impl ScalarFunction for MaskVersion {
                 description: "Return the mask worker's version string.".into(),
                 expected_output: None,
             }],
+            tags: crate::meta::object_tags(
+                "Mask Worker Version",
+                "Return the semantic version string of the running mask worker binary. Useful for \
+                 diagnostics and confirming which build is attached.",
+                "Return the mask worker version string, e.g. `mask_version()` → '0.1.0'.",
+                "version, build version, mask_version, diagnostics, worker version, semver",
+                "scalar/version.rs",
+            ),
             ..Default::default()
         }
     }

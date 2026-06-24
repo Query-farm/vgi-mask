@@ -17,6 +17,34 @@ use vgi_rpc::{Result, RpcError};
 use crate::arrow_io::text_str;
 use crate::mask::{self, RedactMode};
 
+/// Guaranteed-runnable, catalog-qualified examples (VGI509). Each `sql` is
+/// self-contained and re-runnable against an attached `mask` worker. We omit
+/// `expected_result` deliberately — the linter only needs each query to execute
+/// cleanly. These cover all three masking strategies; the redaction outputs are
+/// deterministic and the FPE round-trip recovers its input.
+const EXECUTABLE_EXAMPLES: &str = r#"[
+  {
+    "description": "Irreversibly redact a card number, keeping only the last four digits.",
+    "sql": "SELECT mask.main.mask_redact('4012888888881881', 'last4') AS redacted"
+  },
+  {
+    "description": "Redact an email, keeping only the first local character and the domain.",
+    "sql": "SELECT mask.main.mask_redact('alice@example.com', 'email') AS redacted"
+  },
+  {
+    "description": "Format-preserving encrypt a card number into another Luhn-valid 16-digit card.",
+    "sql": "SELECT mask.main.mask_fpe('4012888888881881', 'card', 'my-secret-key') AS encrypted"
+  },
+  {
+    "description": "Round-trip an SSN: mask_unfpe reverses mask_fpe under the same key.",
+    "sql": "SELECT mask.main.mask_unfpe(mask.main.mask_fpe('123-45-6789', 'ssn', 'k'), 'ssn', 'k') AS recovered"
+  },
+  {
+    "description": "Produce a stable, non-reversible pseudonym for an account ID.",
+    "sql": "SELECT mask.main.mask_token('customer-42', 'my-secret-key') AS token"
+  }
+]"#;
+
 pub struct MaskRedact;
 
 impl ScalarFunction for MaskRedact {
@@ -25,6 +53,21 @@ impl ScalarFunction for MaskRedact {
     }
 
     fn metadata(&self) -> FunctionMetadata {
+        let mut tags = crate::meta::object_tags(
+            "Irreversible Partial Redaction",
+            "Irreversibly partially mask a value. Mode 'last4' keeps only the last four \
+             characters (stars the rest), 'first4' keeps the first four, 'email' keeps the first \
+             local character plus the @domain, and 'all' stars everything. The original value \
+             cannot be recovered. Use for display masking of cards, SSNs, emails, and other PII. \
+             NULL input returns NULL; an unknown mode raises an error.",
+            "Irreversibly redact a value, e.g. `mask_redact('4012888888881881', 'last4')` → \
+             `************1881`. Modes: `last4`, `first4`, `email`, `all`.",
+            "mask_redact, redact, redaction, partial masking, star out, last4, first4, mask email, \
+             display masking, de-identify, irreversible, obfuscate",
+            "scalar/redact.rs",
+        );
+        // VGI509: at least one object carries runnable, catalog-qualified examples.
+        tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
         FunctionMetadata {
             description: "Irreversible partial masking: mode 'last4' keeps the last four \
                           characters, 'first4' the first four, 'email' the first local char + \
@@ -38,6 +81,7 @@ impl ScalarFunction for MaskRedact {
                     .into(),
                 expected_output: None,
             }],
+            tags,
             ..Default::default()
         }
     }

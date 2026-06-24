@@ -95,6 +95,21 @@ impl ScalarFunction for MaskFpe {
                     .into(),
                 expected_output: None,
             }],
+            tags: crate::meta::object_tags(
+                "Format-Preserving Encrypt Value",
+                "Reversibly encrypt a sensitive value under a secret key while preserving its \
+                 shape, so a 16-digit card stays a Luhn-valid 16-digit card, an SSN stays \
+                 SSN-shaped (dashes kept), an email keeps its @domain, and digit/alnum strings \
+                 keep their length. Choose the shape with the format profile \
+                 (card/ssn/digits/alnum/email). Reverse it with mask_unfpe under the same format \
+                 and key. NULL input returns NULL; an unknown format or empty key raises an error.",
+                "Format-preserving encrypt a value, keeping its shape, e.g. \
+                 `mask_fpe('4012888888881881', 'card', key)` → another Luhn-valid 16-digit card. \
+                 Reverse with `mask_unfpe`.",
+                "mask_fpe, format-preserving encryption, FPE, FF1, encrypt, tokenize card, mask \
+                 credit card, mask SSN, mask email, reversible masking, de-identify, anonymize",
+                "scalar/fpe.rs",
+            ),
             ..Default::default()
         }
     }
@@ -135,6 +150,18 @@ impl ScalarFunction for MaskUnfpe {
                     .into(),
                 expected_output: None,
             }],
+            tags: crate::meta::object_tags(
+                "Format-Preserving Decrypt Value",
+                "Inverse of mask_fpe: recover the original sensitive value from a \
+                 format-preserving ciphertext, given the same format profile \
+                 (card/ssn/digits/alnum/email) and the same secret key used to encrypt it. NULL \
+                 input returns NULL; an unknown format or empty key raises an error.",
+                "Reverse `mask_fpe` to recover the original value, e.g. \
+                 `mask_unfpe(mask_fpe('123-45-6789', 'ssn', key), 'ssn', key)` → '123-45-6789'.",
+                "mask_unfpe, decrypt, format-preserving decryption, FPE, FF1, reverse mask, \
+                 unmask, recover original, round-trip",
+                "scalar/fpe.rs",
+            ),
             ..Default::default()
         }
     }

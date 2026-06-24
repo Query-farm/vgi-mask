@@ -22,6 +22,7 @@
 
 mod arrow_io;
 mod mask;
+mod meta;
 mod scalar;
 
 use vgi::catalog::{CatSchema, CatalogModel};
@@ -45,6 +46,17 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 .to_string(),
         ),
         tags: vec![
+            (
+                "vgi.title".to_string(),
+                "Data Masking & De-identification".to_string(),
+            ),
+            (
+                "vgi.keywords".to_string(),
+                "mask, masking, de-identification, anonymization, pseudonymization, PII, \
+                 format-preserving encryption, FPE, tokenization, redaction, encrypt, decrypt, \
+                 credit card, SSN, email, GDPR, HIPAA, data privacy"
+                    .to_string(),
+            ),
             (
                 "vgi.description_llm".to_string(),
                 "Mask sensitive values in SQL three ways: (1) format-preserving encryption \
@@ -93,6 +105,23 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                     .to_string(),
             ),
             tags: vec![
+                ("vgi.title".to_string(), "Mask — main".to_string()),
+                (
+                    "vgi.keywords".to_string(),
+                    "mask, masking, mask_fpe, mask_unfpe, mask_token, mask_redact, \
+                     format-preserving encryption, tokenization, redaction, de-identification, \
+                     PII, anonymization, pseudonymization, encrypt, decrypt"
+                        .to_string(),
+                ),
+                // VGI123 classifying tags (bare keys: domain/category/topic) for faceting.
+                ("domain".to_string(), "security".to_string()),
+                ("category".to_string(), "data-masking".to_string()),
+                ("topic".to_string(), "pii-de-identification".to_string()),
+                (
+                    "vgi.source_url".to_string(),
+                    "https://github.com/Query-farm/vgi-mask/blob/main/crates/mask-worker/src/main.rs"
+                        .to_string(),
+                ),
                 (
                     "vgi.description_llm".to_string(),
                     "Data-masking functions: format-preserving encrypt/decrypt sensitive values \
@@ -105,6 +134,17 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                     "vgi.description_md".to_string(),
                     "Data-masking functions (format-preserving encryption, tokenization, \
                      redaction) over Apache Arrow."
+                        .to_string(),
+                ),
+                // VGI506 representative example queries for the schema.
+                (
+                    "vgi.example_queries".to_string(),
+                    "SELECT mask.main.mask_fpe('4012888888881881', 'card', 'my-secret-key');\n\
+                     SELECT mask.main.mask_unfpe(mask.main.mask_fpe('123-45-6789', 'ssn', 'k'), \
+                     'ssn', 'k');\n\
+                     SELECT mask.main.mask_token('customer-42', 'my-secret-key');\n\
+                     SELECT mask.main.mask_redact('4012888888881881', 'last4');\n\
+                     SELECT mask.main.mask_version();"
                         .to_string(),
                 ),
             ],
