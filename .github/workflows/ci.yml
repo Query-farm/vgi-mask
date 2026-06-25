@@ -158,3 +158,4 @@ jobs:
         with:
           location: "${{ github.workspace }}/target/release/mask-worker"
           fail-on: info
+          version: "0.37.0"

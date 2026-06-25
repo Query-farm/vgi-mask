@@ -52,10 +52,26 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             ),
             (
                 "vgi.keywords".to_string(),
-                "mask, masking, de-identification, anonymization, pseudonymization, PII, \
-                 format-preserving encryption, FPE, tokenization, redaction, encrypt, decrypt, \
-                 credit card, SSN, email, GDPR, HIPAA, data privacy"
-                    .to_string(),
+                meta::keywords_json(&[
+                    "mask",
+                    "masking",
+                    "de-identification",
+                    "anonymization",
+                    "pseudonymization",
+                    "PII",
+                    "format-preserving encryption",
+                    "FPE",
+                    "tokenization",
+                    "redaction",
+                    "encrypt",
+                    "decrypt",
+                    "credit card",
+                    "SSN",
+                    "email",
+                    "GDPR",
+                    "HIPAA",
+                    "data privacy",
+                ]),
             ),
             (
                 "vgi.doc_llm".to_string(),
@@ -108,20 +124,28 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 ("vgi.title".to_string(), "Mask — main".to_string()),
                 (
                     "vgi.keywords".to_string(),
-                    "mask, masking, mask_fpe, mask_unfpe, mask_token, mask_redact, \
-                     format-preserving encryption, tokenization, redaction, de-identification, \
-                     PII, anonymization, pseudonymization, encrypt, decrypt"
-                        .to_string(),
+                    meta::keywords_json(&[
+                        "mask",
+                        "masking",
+                        "mask_fpe",
+                        "mask_unfpe",
+                        "mask_token",
+                        "mask_redact",
+                        "format-preserving encryption",
+                        "tokenization",
+                        "redaction",
+                        "de-identification",
+                        "PII",
+                        "anonymization",
+                        "pseudonymization",
+                        "encrypt",
+                        "decrypt",
+                    ]),
                 ),
                 // VGI123 classifying tags (bare keys: domain/category/topic) for faceting.
                 ("domain".to_string(), "security".to_string()),
                 ("category".to_string(), "data-masking".to_string()),
                 ("topic".to_string(), "pii-de-identification".to_string()),
-                (
-                    "vgi.source_url".to_string(),
-                    "https://github.com/Query-farm/vgi-mask/blob/main/crates/mask-worker/src/main.rs"
-                        .to_string(),
-                ),
                 (
                     "vgi.doc_llm".to_string(),
                     "The `main` schema of the mask worker. It groups the data-masking scalar \

@@ -50,8 +50,14 @@ impl ScalarFunction for MaskVersion {
                  ## Notes\n\n\
                  - Takes no arguments and is constant for a given build, so it is handy as a \
                  connectivity/diagnostics check.",
-                "version, build version, mask_version, diagnostics, worker version, semver",
-                "scalar/version.rs",
+                &[
+                    "version",
+                    "build version",
+                    "mask_version",
+                    "diagnostics",
+                    "worker version",
+                    "semver",
+                ],
             ),
             ..Default::default()
         }
