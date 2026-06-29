@@ -52,10 +52,26 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             ),
             (
                 "vgi.keywords".to_string(),
-                "mask, masking, de-identification, anonymization, pseudonymization, PII, \
-                 format-preserving encryption, FPE, tokenization, redaction, encrypt, decrypt, \
-                 credit card, SSN, email, GDPR, HIPAA, data privacy"
-                    .to_string(),
+                meta::keywords_json(&[
+                    "mask",
+                    "masking",
+                    "de-identification",
+                    "anonymization",
+                    "pseudonymization",
+                    "PII",
+                    "format-preserving encryption",
+                    "FPE",
+                    "tokenization",
+                    "redaction",
+                    "encrypt",
+                    "decrypt",
+                    "credit card",
+                    "SSN",
+                    "email",
+                    "GDPR",
+                    "HIPAA",
+                    "data privacy",
+                ]),
             ),
             (
                 "vgi.doc_llm".to_string(),
@@ -73,12 +89,45 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             ),
             (
                 "vgi.doc_md".to_string(),
-                "# mask\n\nReversible format-preserving encryption, deterministic tokenization, \
-                 and irreversible partial redaction of sensitive values over Apache Arrow.\n\n\
-                 Scalars: `mask_fpe`, `mask_unfpe`, `mask_token`, `mask_redact`, \
-                 `mask_version`.\n\nThe crypto is real, vetted, permissively-licensed crates — \
-                 FF1 (`fpe`) over AES-256 for FPE, HMAC-SHA-256 for tokenization, SHA-256 for \
-                 key derivation. No hand-rolled ciphers."
+                "# Mask: Data Masking, Format-Preserving Encryption & PII De-identification in SQL\n\n\
+                 ![RustCrypto logo](https://avatars.githubusercontent.com/u/22351541?s=240)\n\n\
+                 **Mask** brings production-grade data masking to DuckDB — reversible \
+                 format-preserving encryption (FPE), deterministic tokenization, and irreversible \
+                 redaction of sensitive values, all callable as plain SQL scalar functions over \
+                 Apache Arrow. It is built for data engineers, analysts, and privacy teams who need \
+                 to de-identify PII such as credit card numbers, Social Security numbers, email \
+                 addresses, and account IDs directly in their queries, views, and pipelines, with \
+                 no external service or pre-processing step.\n\n\
+                 Under the hood, Mask uses real, vetted, permissively-licensed cryptography — never \
+                 hand-rolled ciphers. Format-preserving encryption is implemented with the NIST \
+                 [SP 800-38G](https://csrc.nist.gov/publications/detail/sp/800-38g/final) **FF1** \
+                 algorithm from the [`fpe`](https://github.com/str4d/fpe) crate \
+                 ([docs](https://docs.rs/fpe)), keyed with AES-256 from the \
+                 [RustCrypto `aes`](https://github.com/RustCrypto/block-ciphers) crate \
+                 ([docs](https://docs.rs/aes)). Deterministic tokenization uses HMAC-SHA-256, and \
+                 keys are derived with SHA-256, both from the \
+                 [RustCrypto](https://github.com/RustCrypto) hashing and MAC crates \
+                 ([`hmac`](https://docs.rs/hmac), [`sha2`](https://docs.rs/sha2)). FPE preserves a \
+                 value's *shape*: a 16-digit card stays a Luhn-valid 16-digit card, an SSN stays \
+                 SSN-shaped, and an email keeps its `@domain` — so masked data still passes format \
+                 validation and flows through schemas unchanged.\n\n\
+                 The worker exposes five positional scalar functions in the `mask.main` schema. Use \
+                 `mask_fpe(value, format, key)` to reversibly encrypt while preserving format \
+                 (`format` is one of `digits`, `alnum`, `ssn`, `email`, or `card`) and \
+                 `mask_unfpe(value, format, key)` to decrypt it back. Use \
+                 `mask_token(value, key)` to produce a stable, non-reversible HMAC-SHA-256 \
+                 pseudonym — the same input always maps to the same token, so masked columns stay \
+                 joinable across tables for analytics without exposing the real value. Use \
+                 `mask_redact(value, mode)` for one-way display masking (`last4`, `first4`, \
+                 `email`, or `stars`), and `mask_version()` to report the worker version. Typical \
+                 SQL use cases include de-identifying PII in query results, building masked or \
+                 tokenized views for least-privilege access, and generating \
+                 referentially-consistent synthetic test data that mirrors production shape. Mask \
+                 supports GDPR- and HIPAA-driven anonymization and pseudonymization workflows; note \
+                 that key management (KMS/HSM, rotation) is intentionally out of scope — the worker \
+                 simply takes a key. Learn more about \
+                 [format-preserving encryption](https://en.wikipedia.org/wiki/Format-preserving_encryption) \
+                 and the [RustCrypto](https://www.rustcrypto.org/) project that powers Mask."
                     .to_string(),
             ),
             ("vgi.author".to_string(), "Query.Farm".to_string()),
@@ -108,20 +157,28 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 ("vgi.title".to_string(), "Mask — main".to_string()),
                 (
                     "vgi.keywords".to_string(),
-                    "mask, masking, mask_fpe, mask_unfpe, mask_token, mask_redact, \
-                     format-preserving encryption, tokenization, redaction, de-identification, \
-                     PII, anonymization, pseudonymization, encrypt, decrypt"
-                        .to_string(),
+                    meta::keywords_json(&[
+                        "mask",
+                        "masking",
+                        "mask_fpe",
+                        "mask_unfpe",
+                        "mask_token",
+                        "mask_redact",
+                        "format-preserving encryption",
+                        "tokenization",
+                        "redaction",
+                        "de-identification",
+                        "PII",
+                        "anonymization",
+                        "pseudonymization",
+                        "encrypt",
+                        "decrypt",
+                    ]),
                 ),
                 // VGI123 classifying tags (bare keys: domain/category/topic) for faceting.
                 ("domain".to_string(), "security".to_string()),
                 ("category".to_string(), "data-masking".to_string()),
                 ("topic".to_string(), "pii-de-identification".to_string()),
-                (
-                    "vgi.source_url".to_string(),
-                    "https://github.com/Query-farm/vgi-mask/blob/main/crates/mask-worker/src/main.rs"
-                        .to_string(),
-                ),
                 (
                     "vgi.doc_llm".to_string(),
                     "The `main` schema of the mask worker. It groups the data-masking scalar \

@@ -81,9 +81,19 @@ impl ScalarFunction for MaskToken {
                  you need reversibility).\n\
                  - Deterministic output is frequency-analyzable on low-cardinality data.\n\
                  - NULL in → NULL out; an empty key is an error.",
-                "mask_token, tokenize, tokenization, pseudonym, pseudonymization, HMAC, \
-                 deterministic masking, joinable, referential integrity, de-identify, hash",
-                "scalar/token.rs",
+                &[
+                    "mask_token",
+                    "tokenize",
+                    "tokenization",
+                    "pseudonym",
+                    "pseudonymization",
+                    "HMAC",
+                    "deterministic masking",
+                    "joinable",
+                    "referential integrity",
+                    "de-identify",
+                    "hash",
+                ],
             ),
             ..Default::default()
         }
@@ -91,8 +101,20 @@ impl ScalarFunction for MaskToken {
 
     fn argument_specs(&self) -> Vec<ArgSpec> {
         vec![
-            ArgSpec::any_column("value", 0, "Value to tokenize (VARCHAR)"),
-            ArgSpec::any_column("key", 1, "Secret key string (VARCHAR)"),
+            ArgSpec::column(
+                "value",
+                0,
+                "varchar",
+                "The identifier to tokenize; identical inputs map to identical tokens so they stay \
+                 joinable, and NULL flows through to NULL",
+            ),
+            ArgSpec::column(
+                "key",
+                1,
+                "varchar",
+                "Secret key for the HMAC-SHA-256 (domain-separated from the FPE key); the same \
+                 key+value always yields the same token, and an empty key is rejected",
+            ),
         ]
     }
 

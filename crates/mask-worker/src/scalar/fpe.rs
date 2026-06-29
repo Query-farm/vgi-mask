@@ -64,13 +64,26 @@ fn run_fpe(params: &ProcessParams, batch: &RecordBatch, forward: bool) -> Result
 
 fn fpe_arg_specs() -> Vec<ArgSpec> {
     vec![
-        ArgSpec::any_column("value", 0, "Value to transform (VARCHAR)"),
-        ArgSpec::any_column(
+        ArgSpec::column(
+            "value",
+            0,
+            "varchar",
+            "The sensitive string to transform; its shape is preserved and NULL flows through to NULL",
+        ),
+        ArgSpec::column(
             "format",
             1,
-            "Shape profile: 'card', 'ssn', 'digits', 'alnum', or 'email' (VARCHAR)",
+            "varchar",
+            "Shape profile selecting which characters are encryptable and what structure to keep: \
+             'card', 'ssn', 'digits', 'alnum', or 'email'",
         ),
-        ArgSpec::any_column("key", 2, "Secret key string (VARCHAR)"),
+        ArgSpec::column(
+            "key",
+            2,
+            "varchar",
+            "Secret key the AES key is derived from (via SHA-256); the same key reverses mask_fpe, \
+             and an empty key is rejected",
+        ),
     ]
 }
 
@@ -138,9 +151,20 @@ impl ScalarFunction for MaskFpe {
                  - Values too short for FF1's minimum domain are passed through unchanged but still \
                  round-trip.\n\
                  - NULL in → NULL out; an unknown format or empty key is an error.",
-                "mask_fpe, format-preserving encryption, FPE, FF1, encrypt, tokenize card, mask \
-                 credit card, mask SSN, mask email, reversible masking, de-identify, anonymize",
-                "scalar/fpe.rs",
+                &[
+                    "mask_fpe",
+                    "format-preserving encryption",
+                    "FPE",
+                    "FF1",
+                    "encrypt",
+                    "tokenize card",
+                    "mask credit card",
+                    "mask SSN",
+                    "mask email",
+                    "reversible masking",
+                    "de-identify",
+                    "anonymize",
+                ],
             ),
             ..Default::default()
         }
@@ -219,9 +243,17 @@ impl ScalarFunction for MaskUnfpe {
                  produces incorrect output.\n\
                  - `card` decryption re-derives the Luhn check digit so the round-trip is exact.\n\
                  - NULL in → NULL out; an unknown format or empty key is an error.",
-                "mask_unfpe, decrypt, format-preserving decryption, FPE, FF1, reverse mask, \
-                 unmask, recover original, round-trip",
-                "scalar/fpe.rs",
+                &[
+                    "mask_unfpe",
+                    "decrypt",
+                    "format-preserving decryption",
+                    "FPE",
+                    "FF1",
+                    "reverse mask",
+                    "unmask",
+                    "recover original",
+                    "round-trip",
+                ],
             ),
             ..Default::default()
         }

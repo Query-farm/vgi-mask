@@ -93,9 +93,20 @@ impl ScalarFunction for MaskRedact {
              ## Notes\n\n\
              - For joinable pseudonyms use `mask_token`; for reversible masking use `mask_fpe`.\n\
              - NULL in → NULL out; an unknown mode is an error.",
-            "mask_redact, redact, redaction, partial masking, star out, last4, first4, mask email, \
-             display masking, de-identify, irreversible, obfuscate",
-            "scalar/redact.rs",
+            &[
+                "mask_redact",
+                "redact",
+                "redaction",
+                "partial masking",
+                "star out",
+                "last4",
+                "first4",
+                "mask email",
+                "display masking",
+                "de-identify",
+                "irreversible",
+                "obfuscate",
+            ],
         );
         // VGI509: at least one object carries runnable, catalog-qualified examples.
         tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
@@ -119,11 +130,19 @@ impl ScalarFunction for MaskRedact {
 
     fn argument_specs(&self) -> Vec<ArgSpec> {
         vec![
-            ArgSpec::any_column("value", 0, "Value to redact (VARCHAR)"),
-            ArgSpec::any_column(
+            ArgSpec::column(
+                "value",
+                0,
+                "varchar",
+                "The string to partially mask for display; NULL flows through to NULL",
+            ),
+            ArgSpec::column(
                 "mode",
                 1,
-                "Redaction mode: last4/first4/email/all (VARCHAR)",
+                "varchar",
+                "Redaction strategy: 'last4' keeps the final four characters, 'first4' the leading \
+                 four, 'email' keeps the first local character plus the @domain, 'all' stars \
+                 everything",
             ),
         ]
     }
