@@ -90,6 +90,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             (
                 "vgi.doc_md".to_string(),
                 "# Mask: Data Masking, Format-Preserving Encryption & PII De-identification in SQL\n\n\
+                 ![RustCrypto logo](https://avatars.githubusercontent.com/u/22351541?s=240)\n\n\
                  **Mask** brings production-grade data masking to DuckDB — reversible \
                  format-preserving encryption (FPE), deterministic tokenization, and irreversible \
                  redaction of sensitive values, all callable as plain SQL scalar functions over \
