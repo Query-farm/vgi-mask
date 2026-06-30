@@ -149,7 +149,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Set up sccache
-        uses: mozilla-actions/sccache-action@v0.0.9
+        uses: mozilla-actions/sccache-action@v0.0.10
 
       - name: Build worker (release)
         run: cargo build --release --bin mask-worker
