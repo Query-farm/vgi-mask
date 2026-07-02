@@ -107,6 +107,7 @@ impl ScalarFunction for MaskRedact {
                 "irreversible",
                 "obfuscate",
             ],
+            "Redaction",
         );
         // VGI509: at least one object carries runnable, catalog-qualified examples.
         tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));

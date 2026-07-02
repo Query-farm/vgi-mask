@@ -58,6 +58,7 @@ impl ScalarFunction for MaskVersion {
                     "worker version",
                     "semver",
                 ],
+                "Diagnostics",
             ),
             ..Default::default()
         }

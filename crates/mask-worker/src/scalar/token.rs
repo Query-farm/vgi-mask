@@ -94,6 +94,7 @@ impl ScalarFunction for MaskToken {
                     "de-identify",
                     "hash",
                 ],
+                "Tokenization",
             ),
             ..Default::default()
         }

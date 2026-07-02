@@ -2,3 +2,6 @@
 /build
 **/*.rs.bk
 .DS_Store
+
+# vgi-lint --execute --ai caches (doc-review / simulate)
+.vgi-*-cache.json

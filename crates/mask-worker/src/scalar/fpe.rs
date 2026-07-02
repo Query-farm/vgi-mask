@@ -165,6 +165,7 @@ impl ScalarFunction for MaskFpe {
                     "de-identify",
                     "anonymize",
                 ],
+                "Format-Preserving Encryption",
             ),
             ..Default::default()
         }
@@ -254,6 +255,7 @@ impl ScalarFunction for MaskUnfpe {
                     "recover original",
                     "round-trip",
                 ],
+                "Format-Preserving Encryption",
             ),
             ..Default::default()
         }

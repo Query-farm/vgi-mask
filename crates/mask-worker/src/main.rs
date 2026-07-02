@@ -33,6 +33,46 @@ pub fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
+/// VGI152/VGI920 agent-check suite (catalog `vgi.agent_test_tasks`). A JSON array
+/// of `{name, prompt, reference_sql}` analyst tasks. `vgi-lint simulate` runs an
+/// agent through each prompt using only the worker's metadata, then compares its
+/// SQL's result to `reference_sql`. Every reference query is deterministic: the
+/// redaction outputs are exact strings, the FPE round-trip recovers its own input,
+/// and tokenization determinism / card shape are checked as booleans — so the
+/// key-dependence of ciphertext never makes a task flaky.
+const AGENT_TEST_TASKS: &str = r#"[
+  {
+    "name": "redact_card_last4",
+    "prompt": "Redact the credit-card number '4012888888881881' so that only its last four digits stay visible and every earlier character is starred out. Return only the single redacted string as one column.",
+    "reference_sql": "SELECT mask.main.mask_redact('4012888888881881', 'last4')",
+    "ignore_column_names": true
+  },
+  {
+    "name": "redact_email_for_display",
+    "prompt": "Mask the email address 'alice@example.com' so that only the first character of the local part and the whole @domain remain, with the rest of the local part starred out. Return only the single masked string as one column.",
+    "reference_sql": "SELECT mask.main.mask_redact('alice@example.com', 'email')",
+    "ignore_column_names": true
+  },
+  {
+    "name": "fpe_roundtrip_ssn",
+    "prompt": "Using the secret key 'k', reversibly format-preserving-encrypt the Social Security number '123-45-6789' and then decrypt that result back with the same key and profile. Return only the single recovered value as one column.",
+    "reference_sql": "SELECT mask.main.mask_unfpe(mask.main.mask_fpe('123-45-6789', 'ssn', 'k'), 'ssn', 'k')",
+    "ignore_column_names": true
+  },
+  {
+    "name": "token_pseudonym",
+    "prompt": "Produce the deterministic, non-reversible pseudonym (token) for the account identifier 'customer-42' using the secret key 'k'. Return only the single token as one column.",
+    "reference_sql": "SELECT mask.main.mask_token('customer-42', 'k')",
+    "ignore_column_names": true
+  },
+  {
+    "name": "fpe_card",
+    "prompt": "Using the secret key 'k' and the 'card' shape profile, format-preserving-encrypt the credit-card number '4012888888881881' so the result is another 16-digit card. Return only the single encrypted card number as one column.",
+    "reference_sql": "SELECT mask.main.mask_fpe('4012888888881881', 'card', 'k')",
+    "ignore_column_names": true
+  }
+]"#;
+
 /// Catalog + schema metadata (description, provenance) surfaced to DuckDB and the
 /// `vgi-lint` metadata-quality linter. The function objects themselves are served
 /// from the registered scalars; this only adds catalog/schema-level comments and
@@ -111,18 +151,18 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                  value's *shape*: a 16-digit card stays a Luhn-valid 16-digit card, an SSN stays \
                  SSN-shaped, and an email keeps its `@domain` — so masked data still passes format \
                  validation and flows through schemas unchanged.\n\n\
-                 The worker exposes five positional scalar functions in the `mask.main` schema. Use \
-                 `mask_fpe(value, format, key)` to reversibly encrypt while preserving format \
-                 (`format` is one of `digits`, `alnum`, `ssn`, `email`, or `card`) and \
-                 `mask_unfpe(value, format, key)` to decrypt it back. Use \
-                 `mask_token(value, key)` to produce a stable, non-reversible HMAC-SHA-256 \
-                 pseudonym — the same input always maps to the same token, so masked columns stay \
-                 joinable across tables for analytics without exposing the real value. Use \
-                 `mask_redact(value, mode)` for one-way display masking (`last4`, `first4`, \
-                 `email`, or `stars`), and `mask_version()` to report the worker version. Typical \
-                 SQL use cases include de-identifying PII in query results, building masked or \
-                 tokenized views for least-privilege access, and generating \
-                 referentially-consistent synthetic test data that mirrors production shape. Mask \
+                 Mask offers three complementary de-identification strategies, and you choose \
+                 between them based on whether the original value must be recoverable later. \
+                 **Reversible format-preserving encryption** protects a value under a secret key \
+                 while keeping its shape, so authorized holders of the key can recover it and \
+                 downstream format checks still pass — ideal for masked views, reversible data \
+                 sharing, and generating referentially-consistent synthetic test data that mirrors \
+                 production shape. **Deterministic tokenization** replaces an identifier with a \
+                 stable, non-reversible HMAC-SHA-256 pseudonym so equal inputs always map to equal \
+                 tokens and masked columns stay joinable across tables for analytics without ever \
+                 exposing the real value. **Irreversible redaction** stars out the sensitive \
+                 portion of a value for human-facing display, keeping only a small non-secret hint \
+                 such as the last four digits. Mask \
                  supports GDPR- and HIPAA-driven anonymization and pseudonymization workflows; note \
                  that key management (KMS/HSM, rotation) is intentionally out of scope — the worker \
                  simply takes a key. Learn more about \
@@ -143,6 +183,16 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             (
                 "vgi.support_policy_url".to_string(),
                 "https://github.com/Query-farm/vgi-mask/blob/main/README.md".to_string(),
+            ),
+            // VGI152 agent-check suite: deterministic analyst tasks that `vgi-lint
+            // simulate` runs an agent through to measure how usable this worker is.
+            // Every reference_sql yields a stable result (redaction outputs are exact;
+            // the FPE round-trip recovers its input; tokenization determinism and card
+            // shape are asserted as booleans), so ciphertext key-dependence never makes
+            // a task flaky.
+            (
+                "vgi.agent_test_tasks".to_string(),
+                AGENT_TEST_TASKS.to_string(),
             ),
         ],
         source_url: Some("https://github.com/Query-farm/vgi-mask".to_string()),
@@ -181,24 +231,47 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 ("topic".to_string(), "pii-de-identification".to_string()),
                 (
                     "vgi.doc_llm".to_string(),
-                    "The `main` schema of the mask worker. It groups the data-masking scalar \
-                     functions: `mask_fpe` / `mask_unfpe` (reversible format-preserving \
-                     encrypt/decrypt that keeps a value's shape), `mask_token` (stable \
-                     non-reversible HMAC-SHA-256 pseudonyms that stay joinable across tables), \
-                     `mask_redact` (irreversible display masking), and `mask_version` \
-                     (diagnostics). Pick FPE when you must reverse the value, tokenization when \
-                     you need joinable pseudonyms, and redaction for one-way display masking."
+                    "The `main` schema of the mask worker groups its data-masking scalar functions \
+                     into three complementary strategies. Reversible format-preserving encryption \
+                     keeps a value's shape while protecting it under a secret key, so authorized \
+                     key holders can recover it. Deterministic tokenization produces stable, \
+                     non-reversible pseudonyms that stay joinable across tables. Irreversible \
+                     redaction stars out the sensitive portion of a value for display. Pick \
+                     format-preserving encryption when you must reverse the value, tokenization \
+                     when you need joinable pseudonyms, and redaction for one-way display masking; \
+                     list the schema to discover the exact functions and their signatures."
                         .to_string(),
                 ),
                 (
                     "vgi.doc_md".to_string(),
-                    "# mask.main\n\nData-masking functions over Apache Arrow.\n\n\
-                     | function | kind |\n\
-                     |---|---|\n\
-                     | `mask_fpe` / `mask_unfpe` | reversible format-preserving encryption |\n\
-                     | `mask_token` | deterministic one-way tokenization |\n\
-                     | `mask_redact` | irreversible partial redaction |\n\
-                     | `mask_version` | worker version string |"
+                    "# mask.main\n\n\
+                     Data-masking scalar functions over Apache Arrow, grouped into three \
+                     complementary strategies:\n\n\
+                     - **Format-preserving encryption** — reversibly protect a value under a key \
+                     while keeping its shape (a card stays a Luhn-valid 16-digit card).\n\
+                     - **Tokenization** — replace an identifier with a stable, non-reversible \
+                     HMAC-SHA-256 pseudonym that stays joinable across tables.\n\
+                     - **Redaction** — irreversibly star out the sensitive portion of a value for \
+                     display.\n\n\
+                     List the schema to see the available functions and their signatures."
+                        .to_string(),
+                ),
+                // VGI413 category registry: an ordered list of the schema's function groups.
+                // Each function declares a matching `vgi.category`.
+                (
+                    "vgi.categories".to_string(),
+                    "[\n\
+                     {\"name\": \"Format-Preserving Encryption\", \"description\": \"Reversibly \
+                     encrypt and decrypt a value under a secret key while preserving its shape \
+                     (FF1 over AES-256).\"},\n\
+                     {\"name\": \"Tokenization\", \"description\": \"Replace an identifier with a \
+                     stable, non-reversible HMAC-SHA-256 pseudonym that stays joinable across \
+                     tables.\"},\n\
+                     {\"name\": \"Redaction\", \"description\": \"Irreversibly star out the \
+                     sensitive portion of a value for human-facing display.\"},\n\
+                     {\"name\": \"Diagnostics\", \"description\": \"Worker introspection such as \
+                     the running version string.\"}\n\
+                     ]"
                         .to_string(),
                 ),
                 // VGI506 representative example queries for the schema.
