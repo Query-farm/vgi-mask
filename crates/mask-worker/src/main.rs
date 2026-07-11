@@ -70,6 +70,12 @@ const AGENT_TEST_TASKS: &str = r#"[
     "prompt": "Using the secret key 'k' and the 'card' shape profile, format-preserving-encrypt the credit-card number '4012888888881881' so the result is another 16-digit card. Return only the single encrypted card number as one column.",
     "reference_sql": "SELECT mask.main.mask_fpe('4012888888881881', 'card', 'k')",
     "ignore_column_names": true
+  },
+  {
+    "name": "worker_version",
+    "prompt": "Report the running version string of the mask worker. Return only the single version string as one column.",
+    "reference_sql": "SELECT mask.main.mask_version()",
+    "ignore_column_names": true
   }
 ]"#;
 

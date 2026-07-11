@@ -202,6 +202,14 @@ pub enum Format {
 }
 
 impl Format {
+    /// The canonical, documented profile names — the closed vocabulary surfaced
+    /// to discovery as the `format` argument's `choices` constraint. Each name
+    /// here is a primary case accepted by [`Format::parse`] (which also accepts a
+    /// few aliases such as `pan`/`ccn` for `card`); keep this list and `parse` in
+    /// sync so metadata and behaviour cannot drift.
+    pub const CANONICAL_NAMES: &'static [&'static str] =
+        &["digits", "alnum", "card", "ssn", "email"];
+
     /// Parse a profile name (case-insensitive).
     pub fn parse(name: &str) -> Result<Format, MaskError> {
         match name.trim().to_ascii_lowercase().as_str() {

@@ -74,9 +74,10 @@ fn fpe_arg_specs() -> Vec<ArgSpec> {
             "format",
             1,
             "varchar",
-            "Shape profile selecting which characters are encryptable and what structure to keep: \
-             'card', 'ssn', 'digits', 'alnum', or 'email'",
-        ),
+            "Shape profile selecting which characters are encryptable and what structure to keep. \
+             The machine-readable choices constraint carries the exact vocabulary.",
+        )
+        .with_choices(mask::Format::CANONICAL_NAMES.iter().copied()),
         ArgSpec::column(
             "key",
             2,
