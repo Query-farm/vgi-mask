@@ -12,6 +12,23 @@
 //! VGI139 wants it set once, on the catalog (the worker's repo), so per-object
 //! copies are redundant.
 
+/// JSON-escape a string's contents (no surrounding quotes).
+fn json_escape(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for ch in s.chars() {
+        match ch {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            c if (c as u32) < 0x20 => out.push_str(&format!("\\u{:04x}", c as u32)),
+            c => out.push(c),
+        }
+    }
+    out
+}
+
 /// Encode a list of keywords as the JSON-array string `vgi.keywords` expects
 /// (VGI138): e.g. `["mask", "FPE"]`. Each keyword is JSON-escaped.
 pub fn keywords_json(keywords: &[&str]) -> String {
@@ -21,16 +38,31 @@ pub fn keywords_json(keywords: &[&str]) -> String {
             out.push_str(", ");
         }
         out.push('"');
-        for ch in kw.chars() {
-            match ch {
-                '"' => out.push_str("\\\""),
-                '\\' => out.push_str("\\\\"),
-                _ => out.push(ch),
-            }
-        }
+        out.push_str(&json_escape(kw));
         out.push('"');
     }
     out.push(']');
+    out
+}
+
+/// Encode `(description, sql)` pairs as the described-example JSON list that
+/// `vgi.example_queries` requires (VGI515): `[{"description": "...", "sql":
+/// "..."}]`. The native `duckdb_functions().examples` carrier drops descriptions,
+/// so every function republishes its examples here — byte-identical `sql` — with a
+/// human-readable description the linter and agents can read.
+pub fn example_queries_json(examples: &[(&str, &str)]) -> String {
+    let mut out = String::from("[");
+    for (i, (description, sql)) in examples.iter().enumerate() {
+        if i > 0 {
+            out.push(',');
+        }
+        out.push_str("\n  {\"description\": \"");
+        out.push_str(&json_escape(description));
+        out.push_str("\", \"sql\": \"");
+        out.push_str(&json_escape(sql));
+        out.push_str("\"}");
+    }
+    out.push_str("\n]");
     out
 }
 

@@ -96,17 +96,17 @@ impl ScalarFunction for MaskFpe {
     }
 
     fn metadata(&self) -> FunctionMetadata {
-        FunctionMetadata {
+        let ex_sql = "SELECT mask.main.mask_fpe('4012888888881881', 'card', 'my-secret-key');";
+        let ex_desc = "Format-preserving encrypt a credit-card number; the result is a \
+                       different but still Luhn-valid 16-digit card.";
+        let mut md = FunctionMetadata {
             description: "Format-preserving encrypt a value under a shape profile \
                           (card/ssn/digits/alnum/email) and key; output keeps the input shape"
                 .into(),
             return_type: Some(DataType::Utf8),
             examples: vec![FunctionExample {
-                sql: "SELECT mask.main.mask_fpe('4012888888881881', 'card', 'my-secret-key');"
-                    .into(),
-                description: "Format-preserving encrypt a credit-card number; the result is a \
-                              different but still Luhn-valid 16-digit card."
-                    .into(),
+                sql: ex_sql.into(),
+                description: ex_desc.into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(
@@ -122,11 +122,11 @@ impl ScalarFunction for MaskFpe {
                  for authorized holders of the key. If you never need to recover the value, prefer \
                  `mask_token` (one-way pseudonym) or `mask_redact` (display masking).\n\n\
                  ### Inputs\n\
-                 - `value` — the string to encrypt (VARCHAR). NULL passes through to NULL.\n\
+                 - `value` — the string to encrypt (`VARCHAR`). NULL passes through to NULL.\n\
                  - `format` — shape profile: `card`, `ssn`, `digits`, `alnum`, or `email`.\n\
                  - `key` — secret key string; the AES key is derived from it via SHA-256.\n\n\
                  ### Output\n\
-                 A VARCHAR ciphertext with the same shape as the input. `card` stays a Luhn-valid \
+                 A `VARCHAR` ciphertext with the same shape as the input. `card` stays a Luhn-valid \
                  16-digit number, `ssn` keeps its dashes, `email` keeps `@domain` and FPEs only the \
                  local part, `digits`/`alnum` keep their length and character class.\n\n\
                  ### Behavior & edge cases\n\
@@ -169,7 +169,12 @@ impl ScalarFunction for MaskFpe {
                 "Format-Preserving Encryption",
             ),
             ..Default::default()
-        }
+        };
+        md.tags.push((
+            "vgi.example_queries".into(),
+            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+        ));
+        md
     }
 
     fn argument_specs(&self) -> Vec<ArgSpec> {
@@ -193,19 +198,19 @@ impl ScalarFunction for MaskUnfpe {
     }
 
     fn metadata(&self) -> FunctionMetadata {
-        FunctionMetadata {
+        let ex_sql = "SELECT mask.main.mask_unfpe(\
+                      mask.main.mask_fpe('123-45-6789', 'ssn', 'my-secret-key'), \
+                      'ssn', 'my-secret-key');";
+        let ex_desc = "Round-trip an SSN: mask_unfpe reverses mask_fpe under the same \
+                       format and key, recovering '123-45-6789'.";
+        let mut md = FunctionMetadata {
             description: "Inverse of mask_fpe: recover the original value under the same \
                           format profile and key"
                 .into(),
             return_type: Some(DataType::Utf8),
             examples: vec![FunctionExample {
-                sql: "SELECT mask.main.mask_unfpe(\
-                      mask.main.mask_fpe('123-45-6789', 'ssn', 'my-secret-key'), \
-                      'ssn', 'my-secret-key');"
-                    .into(),
-                description: "Round-trip an SSN: mask_unfpe reverses mask_fpe under the same \
-                              format and key, recovering '123-45-6789'."
-                    .into(),
+                sql: ex_sql.into(),
+                description: ex_desc.into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(
@@ -219,12 +224,12 @@ impl ScalarFunction for MaskUnfpe {
                  profile and the **same** `key` that produced the ciphertext — a different key \
                  yields different (wrong) output, which is the point of keyed encryption.\n\n\
                  ### Inputs\n\
-                 - `value` — the format-preserving ciphertext to reverse (VARCHAR).\n\
+                 - `value` — the format-preserving ciphertext to reverse (`VARCHAR`).\n\
                  - `format` — the profile used to encrypt: `card`, `ssn`, `digits`, `alnum`, or \
                  `email`.\n\
                  - `key` — the same secret key that was used with `mask_fpe`.\n\n\
                  ### Output\n\
-                 The recovered original VARCHAR value.\n\n\
+                 The recovered original `VARCHAR` value.\n\n\
                  ### Behavior & edge cases\n\
                  - For `card`, decryption re-derives the Luhn check digit, so the original \
                  16-digit number is reproduced exactly.\n\
@@ -259,7 +264,12 @@ impl ScalarFunction for MaskUnfpe {
                 "Format-Preserving Encryption",
             ),
             ..Default::default()
-        }
+        };
+        md.tags.push((
+            "vgi.example_queries".into(),
+            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+        ));
+        md
     }
 
     fn argument_specs(&self) -> Vec<ArgSpec> {

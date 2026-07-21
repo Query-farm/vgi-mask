@@ -18,10 +18,10 @@ use crate::arrow_io::text_str;
 use crate::mask::{self, RedactMode};
 
 /// Guaranteed-runnable, catalog-qualified examples (VGI509). Each `sql` is
-/// self-contained and re-runnable against an attached `mask` worker. We omit
-/// `expected_result` deliberately — the linter only needs each query to execute
-/// cleanly. These cover all three masking strategies; the redaction outputs are
-/// deterministic and the FPE round-trip recovers its input.
+/// self-contained and re-runnable against an attached `mask` worker; the linter
+/// executes them and checks they run cleanly. These span all three masking
+/// strategies — the redaction outputs are deterministic and the FPE round-trip
+/// recovers its input, so no assertion depends on key-derived ciphertext.
 const EXECUTABLE_EXAMPLES: &str = r#"[
   {
     "description": "Irreversibly redact a card number, keeping only the last four digits.",
@@ -65,7 +65,7 @@ impl ScalarFunction for MaskRedact {
              export. It is the simplest masking strategy; choose `mask_token` instead when you \
              need joinable pseudonyms, or `mask_fpe` when you need to reverse the transform later.\n\n\
              ### Inputs\n\
-             - `value` — the string to redact (VARCHAR). NULL passes through to NULL.\n\
+             - `value` — the string to redact (`VARCHAR`). NULL passes through to NULL.\n\
              - `mode` — redaction strategy (see below).\n\n\
              ### Modes\n\
              | mode | keeps | example |\n\
@@ -109,7 +109,17 @@ impl ScalarFunction for MaskRedact {
             ],
             "Redaction",
         );
-        // VGI509: at least one object carries runnable, catalog-qualified examples.
+        let ex_sql = "SELECT mask.main.mask_redact('4012888888881881', 'last4');";
+        let ex_desc = "Irreversibly redact a card number, keeping only the last four \
+                       digits (************1881).";
+        // VGI515: republish the example with its description; the native
+        // duckdb_functions().examples carrier drops descriptions.
+        tags.push((
+            "vgi.example_queries".into(),
+            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+        ));
+        // VGI509: at least one object carries verified-runnable, catalog-qualified
+        // examples the linter actually executes.
         tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
         FunctionMetadata {
             description: "Irreversible partial masking: mode 'last4' keeps the last four \
@@ -118,10 +128,8 @@ impl ScalarFunction for MaskRedact {
                 .into(),
             return_type: Some(DataType::Utf8),
             examples: vec![FunctionExample {
-                sql: "SELECT mask.main.mask_redact('4012888888881881', 'last4');".into(),
-                description: "Irreversibly redact a card number, keeping only the last four \
-                              digits (************1881)."
-                    .into(),
+                sql: ex_sql.into(),
+                description: ex_desc.into(),
                 expected_output: None,
             }],
             tags,
@@ -144,7 +152,8 @@ impl ScalarFunction for MaskRedact {
                 "Redaction strategy: 'last4' keeps the final four characters, 'first4' the leading \
                  four, 'email' keeps the first local character plus the @domain, 'all' stars \
                  everything",
-            ),
+            )
+            .with_choices(mask::RedactMode::CANONICAL_NAMES.iter().copied()),
         ]
     }
 

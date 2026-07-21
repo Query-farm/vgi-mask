@@ -16,6 +16,9 @@
 //! SELECT mask_redact('123456789', 'last4');           -- *****6789
 //! ```
 //!
+//! The worker's build version is published as the catalog's
+//! `implementation_version` (read via `vgi_catalogs()`), not as a scalar function.
+//!
 //! The pure engine (FF1 FPE, HMAC tokenization, redaction) lives in `mask.rs`;
 //! the `scalar/` modules are thin Arrow adapters over it. Scalars are
 //! POSITIONAL-only, per VGI convention.
@@ -28,7 +31,7 @@ mod scalar;
 use vgi::catalog::{CatSchema, CatalogModel};
 use vgi::Worker;
 
-/// Worker version string, surfaced by `mask_version()`.
+/// Worker build version, published as the catalog's `implementation_version`.
 pub fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
@@ -69,12 +72,6 @@ const AGENT_TEST_TASKS: &str = r#"[
     "name": "fpe_card",
     "prompt": "Using the secret key 'k' and the 'card' shape profile, format-preserving-encrypt the credit-card number '4012888888881881' so the result is another 16-digit card. Return only the single encrypted card number as one column.",
     "reference_sql": "SELECT mask.main.mask_fpe('4012888888881881', 'card', 'k')",
-    "ignore_column_names": true
-  },
-  {
-    "name": "worker_version",
-    "prompt": "Report the running version string of the mask worker. Return only the single version string as one column.",
-    "reference_sql": "SELECT mask.main.mask_version()",
     "ignore_column_names": true
   }
 ]"#;
@@ -202,6 +199,10 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             ),
         ],
         source_url: Some("https://github.com/Query-farm/vgi-mask".to_string()),
+        // Build version of the worker binary — read by agents via `vgi_catalogs()`
+        // without spending a query, and can't drift from the running build. Replaces
+        // the former `mask_version()` scalar (VGI328).
+        implementation_version: Some(version().to_string()),
         schemas: vec![CatSchema {
             name: "main".to_string(),
             comment: Some(
@@ -244,8 +245,10 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                      non-reversible pseudonyms that stay joinable across tables. Irreversible \
                      redaction stars out the sensitive portion of a value for display. Pick \
                      format-preserving encryption when you must reverse the value, tokenization \
-                     when you need joinable pseudonyms, and redaction for one-way display masking; \
-                     list the schema to discover the exact functions and their signatures."
+                     when you need joinable pseudonyms, and redaction for one-way display masking. \
+                     Format-preserving encryption alone is reversible under the key; tokenization \
+                     and redaction are one-way, and tokenization additionally keeps equal inputs \
+                     equal so masked columns remain joinable."
                         .to_string(),
                 ),
                 (
@@ -259,7 +262,9 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                      HMAC-SHA-256 pseudonym that stays joinable across tables.\n\
                      - **Redaction** — irreversibly star out the sensitive portion of a value for \
                      display.\n\n\
-                     List the schema to see the available functions and their signatures."
+                     Only format-preserving encryption is reversible (under the same key); \
+                     tokenization and redaction are one-way, and tokenization keeps equal inputs \
+                     equal so masked columns stay joinable."
                         .to_string(),
                 ),
                 // VGI413 category registry: an ordered list of the schema's function groups.
@@ -274,22 +279,37 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                      stable, non-reversible HMAC-SHA-256 pseudonym that stays joinable across \
                      tables.\"},\n\
                      {\"name\": \"Redaction\", \"description\": \"Irreversibly star out the \
-                     sensitive portion of a value for human-facing display.\"},\n\
-                     {\"name\": \"Diagnostics\", \"description\": \"Worker introspection such as \
-                     the running version string.\"}\n\
+                     sensitive portion of a value for human-facing display.\"}\n\
                      ]"
                         .to_string(),
                 ),
-                // VGI506 representative example queries for the schema.
+                // VGI506/VGI515 representative example queries for the schema, each with a
+                // human-readable description (JSON described-example list).
                 (
                     "vgi.example_queries".to_string(),
-                    "SELECT mask.main.mask_fpe('4012888888881881', 'card', 'my-secret-key');\n\
-                     SELECT mask.main.mask_unfpe(mask.main.mask_fpe('123-45-6789', 'ssn', 'k'), \
-                     'ssn', 'k');\n\
-                     SELECT mask.main.mask_token('customer-42', 'my-secret-key');\n\
-                     SELECT mask.main.mask_redact('4012888888881881', 'last4');\n\
-                     SELECT mask.main.mask_version();"
-                        .to_string(),
+                    meta::example_queries_json(&[
+                        (
+                            "Format-preserving encrypt a credit-card number into another \
+                             Luhn-valid 16-digit card.",
+                            "SELECT mask.main.mask_fpe('4012888888881881', 'card', \
+                             'my-secret-key');",
+                        ),
+                        (
+                            "Round-trip an SSN: mask_unfpe reverses mask_fpe under the same key \
+                             and profile.",
+                            "SELECT mask.main.mask_unfpe(mask.main.mask_fpe('123-45-6789', 'ssn', \
+                             'k'), 'ssn', 'k');",
+                        ),
+                        (
+                            "Produce a stable, non-reversible tokenized pseudonym for an account \
+                             identifier.",
+                            "SELECT mask.main.mask_token('customer-42', 'my-secret-key');",
+                        ),
+                        (
+                            "Irreversibly redact a card number, keeping only the last four digits.",
+                            "SELECT mask.main.mask_redact('4012888888881881', 'last4');",
+                        ),
+                    ]),
                 ),
             ],
             views: Vec::new(),

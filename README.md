@@ -51,7 +51,10 @@ not support `name := value`; that is table-only).
 | `mask_unfpe` | `mask_unfpe(value VARCHAR, format VARCHAR, key VARCHAR) -> VARCHAR` | Inverse of `mask_fpe`; round-trips under the same key + format |
 | `mask_token` | `mask_token(value VARCHAR, key VARCHAR) -> VARCHAR` | Deterministic HMAC-SHA-256 pseudonym (32 hex chars). Joinable, not reversible |
 | `mask_redact` | `mask_redact(value VARCHAR, mode VARCHAR) -> VARCHAR` | Irreversible. `mode` ∈ {`last4`,`first4`,`email`,`all`} |
-| `mask_version` | `mask_version() -> VARCHAR` | Worker version |
+
+The worker's build version is published as the catalog's `implementation_version`
+(read it via `vgi_catalogs('<location>')` or the attached database's
+`vgi_resolved_implementation_version` tag), not as a scalar function.
 
 ### Format profiles (`mask_fpe` / `mask_unfpe`)
 

@@ -98,8 +98,9 @@ CI (`.github/workflows/ci.yml`) runs fmt/clippy/build/test plus a gated
 ## Function surface
 
 Scalars (positional-only): `mask_fpe` (VARCHAR), `mask_unfpe` (VARCHAR),
-`mask_token` (VARCHAR), `mask_redact` (VARCHAR), `mask_version` (VARCHAR). 5 FPE
-format profiles, 4 redaction modes.
+`mask_token` (VARCHAR), `mask_redact` (VARCHAR). 5 FPE format profiles, 4
+redaction modes. The worker's build version is published as the catalog's
+`implementation_version` (no `mask_version()` scalar — removed for VGI328).
 
 ## Security posture (do not overstate in docs)
 

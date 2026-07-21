@@ -28,18 +28,19 @@ impl ScalarFunction for MaskToken {
     }
 
     fn metadata(&self) -> FunctionMetadata {
-        FunctionMetadata {
+        let ex_sql = "SELECT mask.main.mask_token('customer-42', 'my-secret-key');";
+        let ex_desc = "Produce a stable, non-reversible pseudonym for an account ID; the \
+                       same input and key always yield the same token, so it stays \
+                       joinable across tables.";
+        let mut md = FunctionMetadata {
             description: "Deterministic pseudonym (HMAC-SHA-256) of a value under a key; same \
                           input+key yields the same token, so it is joinable across tables. \
                           Not reversible."
                 .into(),
             return_type: Some(DataType::Utf8),
             examples: vec![FunctionExample {
-                sql: "SELECT mask.main.mask_token('customer-42', 'my-secret-key');".into(),
-                description: "Produce a stable, non-reversible pseudonym for an account ID; the \
-                              same input and key always yield the same token, so it stays \
-                              joinable across tables."
-                    .into(),
+                sql: ex_sql.into(),
+                description: ex_desc.into(),
                 expected_output: None,
             }],
             tags: crate::meta::object_tags(
@@ -56,10 +57,10 @@ impl ScalarFunction for MaskToken {
                  `mask_fpe`, this is **not reversible**; unlike `mask_redact`, it does not preserve \
                  the input's shape.\n\n\
                  ### Inputs\n\
-                 - `value` — the identifier to tokenize (VARCHAR). NULL passes through to NULL.\n\
+                 - `value` — the identifier to tokenize (`VARCHAR`). NULL passes through to NULL.\n\
                  - `key` — secret key string; the HMAC key is domain-separated from the FPE key.\n\n\
                  ### Output\n\
-                 A hexadecimal HMAC-SHA-256 token (VARCHAR). The original value cannot be \
+                 A hexadecimal HMAC-SHA-256 token (`VARCHAR`). The original value cannot be \
                  recovered from it.\n\n\
                  ### Behavior & edge cases\n\
                  - Deterministic and collision-resistant; same input+key ⇒ same token across runs \
@@ -97,7 +98,12 @@ impl ScalarFunction for MaskToken {
                 "Tokenization",
             ),
             ..Default::default()
-        }
+        };
+        md.tags.push((
+            "vgi.example_queries".into(),
+            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+        ));
+        md
     }
 
     fn argument_specs(&self) -> Vec<ArgSpec> {

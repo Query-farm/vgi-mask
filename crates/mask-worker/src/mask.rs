@@ -354,6 +354,11 @@ pub enum RedactMode {
 }
 
 impl RedactMode {
+    /// The canonical mode names, in the order surfaced to callers as the
+    /// machine-readable `choices` constraint (VGI317). `all` is canonical; `full`
+    /// is also accepted by `parse` as an alias but is not advertised.
+    pub const CANONICAL_NAMES: &'static [&'static str] = &["last4", "first4", "email", "all"];
+
     pub fn parse(name: &str) -> Result<RedactMode, MaskError> {
         match name.trim().to_ascii_lowercase().as_str() {
             "last4" => Ok(RedactMode::Last4),

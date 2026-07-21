@@ -2,8 +2,8 @@
 # group: [vgi_mask]
 #
 # Deterministic tokenization (mask_token) and irreversible redaction
-# (mask_redact), plus mask_version. Tokens must be stable per input+key (so they
-# preserve join keys) and key-sensitive; redaction output is asserted exactly.
+# (mask_redact). Tokens must be stable per input+key (so they preserve join keys)
+# and key-sensitive; redaction output is asserted exactly.
 
 require-env VGI_MASK_WORKER
 
@@ -95,10 +95,13 @@ statement error
 SELECT mask_redact('x', 'bogus');
 ----
 
-# --- version is non-empty ---
+# --- worker build version is published as the catalog implementation_version ---
+# (no mask_version() scalar; the resolved version rides the attached database's
+# tags, surfaced after ATTACH regardless of transport).
 
 query T
-SELECT length(mask_version()) > 0;
+SELECT map_extract(tags, 'vgi_resolved_implementation_version')[1] IS NOT NULL
+FROM duckdb_databases() WHERE database_name = 'mask';
 ----
 true
 
