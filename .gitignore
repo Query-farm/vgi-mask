@@ -5,3 +5,6 @@
 
 # vgi-lint --execute --ai caches (doc-review / simulate)
 .vgi-*-cache.json
+
+# Browser build output (wasm/build.sh)
+/wasm/dist
