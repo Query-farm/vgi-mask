@@ -96,4 +96,4 @@ HAYBARN_UNITTEST=/path/to/haybarn-unittest WORKER_BIN="$PWD/target/release/mask-
 
 Or use the Makefile target `make test-sql`, which builds the release worker and
 runs the suite against a `haybarn-unittest` on `PATH` (`uv tool install
-haybarn-unittest`).
+'haybarn-unittest<2'`).

@@ -141,10 +141,12 @@ done
 
 cd "$STAGE"
 
-# Warm the extension cache once: vgi from the signed community channel. A miss
-# here is only a warning — the per-test LOAD vgi; (the .test files load it
-# explicitly) is what actually gates each file, and that LOAD only succeeds once
-# vgi has been INSTALLed from community.
+# Warm the extension cache once: vgi from the signed community channel. The
+# warm file also LOADs vgi, so a failed INSTALL surfaces as a non-HTTP "not
+# found" error instead of being silently auto-skipped by the runner (its default
+# ignore list swallows any error containing "HTTP", which a transient download
+# failure does -- and then exits 0). Retry a few times to ride out transient
+# repository/CDN blips, and print the runner output if it never succeeds.
 echo "Warming the extension cache (vgi from community) ..."
 mkdir -p "$STAGE/test"
 cat > "$STAGE/test/_warm.test" <<'EOF'
@@ -152,8 +154,24 @@ cat > "$STAGE/test/_warm.test" <<'EOF'
 # group: [warm]
 statement ok
 INSTALL vgi FROM community;
+
+statement ok
+LOAD vgi;
 EOF
-"$HAYBARN_UNITTEST" "test/_warm.test" >/dev/null 2>&1 || echo "::warning::extension warm step did not fully succeed"
+WARM_LOG="$STAGE/.warm.txt"
+warmed=""
+for attempt in 1 2 3; do
+  if "$HAYBARN_UNITTEST" "test/_warm.test" >"$WARM_LOG" 2>&1 \
+     && ! grep -qiE "All tests were skipped|total skipped [1-9]" "$WARM_LOG"; then
+    warmed=1; break
+  fi
+  echo "extension warm attempt $attempt did not succeed; retrying ..." >&2
+  sleep $((attempt * 5))
+done
+if [[ -z "$warmed" ]]; then
+  echo "::warning::extension warm step did not succeed after 3 attempts"
+  cat "$WARM_LOG" >&2
+fi
 rm -f "$STAGE/test/_warm.test"
 
 # Run the whole suite in one invocation, streaming the runner's native

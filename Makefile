@@ -8,7 +8,7 @@
 #   make fmt          # rustfmt the workspace
 #
 # The SQL E2E suite drives the compiled worker through DuckDB via
-# `haybarn-unittest` (install with: `uv tool install haybarn-unittest`).
+# `haybarn-unittest` (install with: `uv tool install 'haybarn-unittest<2'`).
 
 # Path to the released worker binary handed to DuckDB as the ATTACH LOCATION.
 WORKER         ?= $(CURDIR)/target/release/mask-worker
