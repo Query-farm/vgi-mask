@@ -44,42 +44,34 @@ pub fn version() -> &'static str {
 }
 
 /// VGI152/VGI920 agent-check suite (catalog `vgi.agent_test_tasks`). A JSON array
-/// of `{name, prompt, reference_sql}` analyst tasks. `vgi-lint simulate` runs an
-/// agent through each prompt using only the worker's metadata, then compares its
-/// SQL's result to `reference_sql`. Every reference query is deterministic: the
-/// redaction outputs are exact strings, the FPE round-trip recovers its own input,
-/// and tokenization determinism / card shape are checked as booleans — so the
-/// key-dependence of ciphertext never makes a task flaky.
+/// of `{name, prompt}` analyst tasks; the private `reference_sql` graders live in
+/// `vgi-agent-tests.yaml` at the repo root, keyed by task name (VGI416).
+/// `vgi-lint simulate` runs an agent through each prompt using only the worker's
+/// metadata, then compares its SQL's result to `reference_sql`. Every reference
+/// query is deterministic: the redaction outputs are exact strings, the FPE
+/// round-trip recovers its own input, and tokenization determinism / card shape
+/// are checked as booleans — so the key-dependence of ciphertext never makes a
+/// task flaky.
 const AGENT_TEST_TASKS: &str = r#"[
   {
     "name": "redact_card_last4",
-    "prompt": "Redact the credit-card number '4012888888881881' so that only its last four digits stay visible and every earlier character is starred out. Return only the single redacted string as one column.",
-    "reference_sql": "SELECT mask.main.mask_redact('4012888888881881', 'last4')",
-    "ignore_column_names": true
+    "prompt": "Redact the credit-card number '4012888888881881' so that only its last four digits stay visible and every earlier character is starred out. Return only the single redacted string as one column."
   },
   {
     "name": "redact_email_for_display",
-    "prompt": "Mask the email address 'alice@example.com' so that only the first character of the local part and the whole @domain remain, with the rest of the local part starred out. Return only the single masked string as one column.",
-    "reference_sql": "SELECT mask.main.mask_redact('alice@example.com', 'email')",
-    "ignore_column_names": true
+    "prompt": "Mask the email address 'alice@example.com' so that only the first character of the local part and the whole @domain remain, with the rest of the local part starred out. Return only the single masked string as one column."
   },
   {
     "name": "fpe_roundtrip_ssn",
-    "prompt": "Using the secret key 'k', reversibly format-preserving-encrypt the Social Security number '123-45-6789' and then decrypt that result back with the same key and profile. Return only the single recovered value as one column.",
-    "reference_sql": "SELECT mask.main.mask_unfpe(mask.main.mask_fpe('123-45-6789', 'ssn', 'k'), 'ssn', 'k')",
-    "ignore_column_names": true
+    "prompt": "Using the secret key 'k', reversibly format-preserving-encrypt the Social Security number '123-45-6789' and then decrypt that result back with the same key and profile. Return only the single recovered value as one column."
   },
   {
     "name": "token_pseudonym",
-    "prompt": "Produce the deterministic, non-reversible pseudonym (token) for the account identifier 'customer-42' using the secret key 'k'. Return only the single token as one column.",
-    "reference_sql": "SELECT mask.main.mask_token('customer-42', 'k')",
-    "ignore_column_names": true
+    "prompt": "Produce the deterministic, non-reversible pseudonym (token) for the account identifier 'customer-42' using the secret key 'k'. Return only the single token as one column."
   },
   {
     "name": "fpe_card",
-    "prompt": "Using the secret key 'k' and the 'card' shape profile, format-preserving-encrypt the credit-card number '4012888888881881' so the result is another 16-digit card. Return only the single encrypted card number as one column.",
-    "reference_sql": "SELECT mask.main.mask_fpe('4012888888881881', 'card', 'k')",
-    "ignore_column_names": true
+    "prompt": "Using the secret key 'k' and the 'card' shape profile, format-preserving-encrypt the credit-card number '4012888888881881' so the result is another 16-digit card. Return only the single encrypted card number as one column."
   }
 ]"#;
 
@@ -196,10 +188,11 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             ),
             // VGI152 agent-check suite: deterministic analyst tasks that `vgi-lint
             // simulate` runs an agent through to measure how usable this worker is.
-            // Every reference_sql yields a stable result (redaction outputs are exact;
-            // the FPE round-trip recovers its input; tokenization determinism and card
-            // shape are asserted as booleans), so ciphertext key-dependence never makes
-            // a task flaky.
+            // Only name/prompt are published here; the reference_sql graders live in
+            // vgi-agent-tests.yaml (VGI416). Every reference_sql yields a stable result
+            // (redaction outputs are exact; the FPE round-trip recovers its input;
+            // tokenization determinism and card shape are asserted as booleans), so
+            // ciphertext key-dependence never makes a task flaky.
             (
                 "vgi.agent_test_tasks".to_string(),
                 AGENT_TEST_TASKS.to_string(),
@@ -212,6 +205,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
         implementation_version: Some(version().to_string()),
         schemas: vec![CatSchema {
             name: "main".to_string(),
+            path: Vec::new(),
             comment: Some(
                 "Data-masking functions: format-preserving encryption, tokenization, and \
                  redaction."
