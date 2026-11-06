@@ -1361,7 +1361,7 @@ checksum = "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c"
 
 [[package]]
 name = "mask-wasm"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "mask-worker",
  "vgi",
@@ -1369,7 +1369,7 @@ dependencies = [
 
 [[package]]
 name = "mask-worker"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "aes",
  "arrow-array",
