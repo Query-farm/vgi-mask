@@ -141,6 +141,11 @@ done
 
 cd "$STAGE"
 
+# haybarn-unittest 2.0 runs each test with an isolated $HOME (a fresh
+# ~/.haybarn), so an extension installed by one invocation is "not found" by the
+# next unless --keep-home is passed. Every runner call below passes it.
+HB_ARGS=(--keep-home)
+
 # Warm the extension cache once: vgi from the signed community channel. The
 # warm file also LOADs vgi, so a failed INSTALL surfaces as a non-HTTP "not
 # found" error instead of being silently auto-skipped by the runner (its default
@@ -153,7 +158,7 @@ cat > "$STAGE/test/_warm.test" <<'EOF'
 # name: test/_warm.test
 # group: [warm]
 statement ok
-INSTALL vgi FROM community;
+FORCE INSTALL vgi FROM community;
 
 statement ok
 LOAD vgi;
@@ -161,7 +166,7 @@ EOF
 WARM_LOG="$STAGE/.warm.txt"
 warmed=""
 for attempt in 1 2 3; do
-  if "$HAYBARN_UNITTEST" "test/_warm.test" >"$WARM_LOG" 2>&1 \
+  if "$HAYBARN_UNITTEST" "${HB_ARGS[@]}" "test/_warm.test" >"$WARM_LOG" 2>&1 \
      && ! grep -qiE "All tests were skipped|total skipped [1-9]" "$WARM_LOG"; then
     warmed=1; break
   fi
@@ -186,7 +191,7 @@ TEST_PATTERN="${TEST_PATTERN:-test/sql/*}"
 echo "Running suite (transport: $TRANSPORT, worker: $VGI_MASK_WORKER, pattern: $TEST_PATTERN) ..."
 REPORT="$STAGE/.report.txt"
 set +e
-"$HAYBARN_UNITTEST" "$TEST_PATTERN" 2>&1 | tee "$REPORT"
+"$HAYBARN_UNITTEST" "${HB_ARGS[@]}" "$TEST_PATTERN" 2>&1 | tee "$REPORT"
 status="${PIPESTATUS[0]}"
 set -e
 if grep -qiE "All tests were skipped|total skipped [1-9]" "$REPORT"; then

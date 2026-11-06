@@ -8,7 +8,10 @@
 #   make fmt          # rustfmt the workspace
 #
 # The SQL E2E suite drives the compiled worker through DuckDB via
-# `haybarn-unittest` (install with: `uv tool install 'haybarn-unittest<2'`).
+# `haybarn-unittest` 2.0 (install with:
+# `uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'`).
+# haybarn-unittest 2.0 isolates $HOME, so --keep-home is required for the
+# installed vgi extension to be found.
 
 # Path to the released worker binary handed to DuckDB as the ATTACH LOCATION.
 WORKER         ?= $(CURDIR)/target/release/mask-worker
@@ -30,7 +33,7 @@ test-unit:
 # Build the release worker, then run the SQL E2E suite against it. The worker is
 # a compiled binary, so the build must happen before the tests run.
 test-sql: build
-	VGI_MASK_WORKER="$(WORKER)" $(SQL_RUNNER) --test-dir "$(TEST_DIR)" "$(TEST_PATTERN)"
+	VGI_MASK_WORKER="$(WORKER)" $(SQL_RUNNER) --keep-home --test-dir "$(TEST_DIR)" "$(TEST_PATTERN)"
 
 # clippy (warnings are errors) + formatting check.
 lint:
