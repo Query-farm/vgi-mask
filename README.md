@@ -16,7 +16,7 @@ number, an SSN stays SSN-shaped, an email keeps its `@domain`.
 
 ```sql
 LOAD vgi;
-ATTACH 'mask' (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-mask@v0.2.0');
+ATTACH 'mask' (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-mask@v0.3.0');
 SET search_path = 'mask.main';
 
 SELECT mask_fpe('4012888888881881', 'card', 'k');   -- e.g. 4263982640269299 (16-digit, Luhn-valid)
@@ -37,7 +37,7 @@ Every [GitHub release](https://github.com/Query-farm/vgi-mask/releases) ships a 
 INSTALL vgi FROM community;
 LOAD vgi;
 
-ATTACH 'mask' AS mask (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-mask@v0.2.0');
+ATTACH 'mask' AS mask (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-mask@v0.3.0');
 
 -- Format-preserving encrypt a credit-card number into another Luhn-valid 16-digit card.
 SELECT mask.main.mask_fpe('4012888888881881', 'card', 'my-secret-key');
@@ -48,14 +48,14 @@ SELECT mask.main.mask_unfpe(mask.main.mask_fpe('123-45-6789', 'ssn', 'k'), 'ssn'
 
 Attaching needs no secret or credential: every function takes its key as an argument. Read the honest caveats below on key management before passing keys as SQL literals outside a demo.
 
-Prebuilt binaries cover macOS (Apple silicon), Linux (x86-64 and arm64). `github-auto://` needs an explicit release tag; change `@v0.2.0` to move to a newer release.
+Prebuilt binaries cover macOS (Apple silicon), Linux (x86-64 and arm64). `github-auto://` needs an explicit release tag; change `@v0.3.0` to move to a newer release.
 
 ### Other ways to run it
 
 - **Docker** (the image bundles the worker; needs a container runtime):
 
   ```sql
-  ATTACH 'mask' AS mask (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-mask:0.2.0');
+  ATTACH 'mask' AS mask (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-mask:0.3.0');
   ```
 
 - **Manual download.** Download the archive for your platform from the [releases page](https://github.com/Query-farm/vgi-mask/releases), verify it against its `.sha256` file (a cosign `.cosign.bundle` is published alongside), unpack it, and set `LOCATION` to the path of the extracted worker executable.
