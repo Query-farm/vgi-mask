@@ -93,6 +93,11 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 "Data Masking & De-identification".to_string(),
             ),
             (
+                "vgi.subtitle".to_string(),
+                "Encrypt, tokenize, or redact card numbers, SSNs, emails, and other PII in query results."
+                    .to_string(),
+            ),
+            (
                 "vgi.keywords".to_string(),
                 meta::keywords_json(&[
                     "mask",
@@ -212,7 +217,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                     .to_string(),
             ),
             tags: vec![
-                ("vgi.title".to_string(), "Mask — main".to_string()),
+                ("vgi.title".to_string(), "Masking functions".to_string()),
                 (
                     "vgi.keywords".to_string(),
                     meta::keywords_json(&[
