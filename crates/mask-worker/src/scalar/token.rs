@@ -18,6 +18,7 @@ use vgi::{
 use vgi_rpc::{Result, RpcError};
 
 use crate::arrow_io::text_str;
+use crate::examples::PSEUDONYMOUS_JOIN;
 use crate::mask;
 
 pub struct MaskToken;
@@ -38,11 +39,18 @@ impl ScalarFunction for MaskToken {
                           Not reversible."
                 .into(),
             return_type: Some(DataType::Utf8),
-            examples: vec![FunctionExample {
-                sql: ex_sql.into(),
-                description: ex_desc.into(),
-                expected_output: None,
-            }],
+            examples: vec![
+                FunctionExample {
+                    sql: ex_sql.into(),
+                    description: ex_desc.into(),
+                    expected_output: None,
+                },
+                FunctionExample {
+                    sql: PSEUDONYMOUS_JOIN.1.into(),
+                    description: PSEUDONYMOUS_JOIN.0.into(),
+                    expected_output: None,
+                },
+            ],
             tags: crate::meta::object_tags(
                 "Deterministic Tokenize Value",
                 "## `mask_token(value, key)`\n\n\
@@ -101,7 +109,7 @@ impl ScalarFunction for MaskToken {
         };
         md.tags.push((
             "vgi.example_queries".into(),
-            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+            crate::meta::example_queries_json(&[(ex_desc, ex_sql), PSEUDONYMOUS_JOIN]),
         ));
         md
     }

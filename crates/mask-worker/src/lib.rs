@@ -29,6 +29,7 @@
 //! POSITIONAL-only, per VGI convention.
 
 mod arrow_io;
+mod examples;
 // Public so the lib's integration tests (`tests/roundtrip.rs`) can exercise the
 // pure masking engine directly, without Arrow or RPC.
 pub mod mask;
@@ -68,6 +69,10 @@ const AGENT_TEST_TASKS: &str = r#"[
   {
     "name": "token_pseudonym",
     "prompt": "Produce the deterministic, non-reversible pseudonym (token) for the account identifier 'customer-42' using the secret key 'k'. Return only the single token as one column."
+  },
+  {
+    "name": "join_tokenized_orders",
+    "prompt": "A partner sent an orders extract in which every customer email was replaced by its mask_token under the secret key 'k'. As (token, amount) rows it is: ('b4c4ee4a0fd0d2aa204b70d31b8d8261', 300), ('3add195b10b533ebc79f8b4e2a57c3e1', 45), ('b4c4ee4a0fd0d2aa204b70d31b8d8261', 20), ('2d73051f9dcb7458a8e029355160c22e', 90), ('3add195b10b533ebc79f8b4e2a57c3e1', 10). Our own customer list holds the raw emails 'alice@example.com', 'bob@example.org', 'carol@example.net' and 'dave@example.com'. Match customers to the extract by tokenizing their emails with the same key and return one row per customer that has orders, with exactly two columns: the customer's email redacted with the 'email' redaction mode (VARCHAR) and the customer's total order amount (BIGINT), ordered by the total descending."
   },
   {
     "name": "fpe_card",
@@ -294,6 +299,9 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 (
                     "vgi.example_queries".to_string(),
                     meta::example_queries_json(&[
+                        examples::MASKED_CUSTOMER_VIEW,
+                        examples::PSEUDONYMOUS_JOIN,
+                        examples::ENCRYPT_AND_VERIFY,
                         (
                             "Format-preserving encrypt a credit-card number into another \
                              Luhn-valid 16-digit card.",
@@ -346,4 +354,27 @@ pub fn build_worker() -> Worker {
     scalar::register(&mut worker);
     worker.set_catalog(catalog_metadata(&name));
     worker
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn tag(tags: &[(String, String)], key: &str) -> String {
+        tags.iter().find(|(k, _)| k == key).unwrap().1.clone()
+    }
+
+    #[test]
+    fn schema_example_queries_lead_with_composed_examples() {
+        let model = catalog_metadata("mask");
+        let list = tag(&model.schemas[0].tags, "vgi.example_queries");
+        for (_, sql) in [
+            examples::MASKED_CUSTOMER_VIEW,
+            examples::PSEUDONYMOUS_JOIN,
+            examples::ENCRYPT_AND_VERIFY,
+        ] {
+            // No quotes/backslashes in these SQLs, so they appear unescaped.
+            assert!(list.contains(&format!("\"sql\": \"{sql}\"")), "{sql}");
+        }
+    }
 }

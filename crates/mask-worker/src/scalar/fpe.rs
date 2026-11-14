@@ -28,6 +28,7 @@ use vgi::{
 use vgi_rpc::{Result, RpcError};
 
 use crate::arrow_io::text_str;
+use crate::examples::ENCRYPT_AND_VERIFY;
 use crate::mask::{self, Format};
 
 /// Shared driver for `mask_fpe` (forward) and `mask_unfpe` (inverse).
@@ -104,11 +105,18 @@ impl ScalarFunction for MaskFpe {
                           (card/ssn/digits/alnum/email) and key; output keeps the input shape"
                 .into(),
             return_type: Some(DataType::Utf8),
-            examples: vec![FunctionExample {
-                sql: ex_sql.into(),
-                description: ex_desc.into(),
-                expected_output: None,
-            }],
+            examples: vec![
+                FunctionExample {
+                    sql: ex_sql.into(),
+                    description: ex_desc.into(),
+                    expected_output: None,
+                },
+                FunctionExample {
+                    sql: ENCRYPT_AND_VERIFY.1.into(),
+                    description: ENCRYPT_AND_VERIFY.0.into(),
+                    expected_output: None,
+                },
+            ],
             tags: crate::meta::object_tags(
                 "Format-Preserving Encrypt Value",
                 "## `mask_fpe(value, format, key)`\n\n\
@@ -172,7 +180,7 @@ impl ScalarFunction for MaskFpe {
         };
         md.tags.push((
             "vgi.example_queries".into(),
-            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+            crate::meta::example_queries_json(&[(ex_desc, ex_sql), ENCRYPT_AND_VERIFY]),
         ));
         md
     }

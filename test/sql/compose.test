@@ -1,0 +1,50 @@
+# name: test/sql/compose.test
+# group: [vgi_mask]
+#
+# Composed examples (crates/mask-worker/src/examples.rs): queries that combine
+# two or more mask functions. Keep the SQL here in step with examples.rs.
+# Ciphertext is key-derivation-dependent, so the FPE columns are asserted by
+# shape / round-trip, not by value.
+
+require-env VGI_MASK_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'mask' AS mask (TYPE vgi, LOCATION '${VGI_MASK_WORKER}');
+
+# PSEUDONYMOUS_JOIN: tokens join the shared extract back to the customers;
+# only the redacted email is shown.
+query TTI
+WITH customers(email, region) AS (VALUES ('alice@example.com', 'EU'), ('bob@example.org', 'US'), ('carol@example.net', 'US')), shared_orders AS (SELECT mask.main.mask_token(o.email, 'my-secret-key') AS customer_key, o.amount FROM (VALUES ('alice@example.com', 120), ('bob@example.org', 40), ('alice@example.com', 80), ('carol@example.net', 15), ('bob@example.org', 25)) AS o(email, amount)) SELECT mask.main.mask_redact(c.email, 'email') AS customer, c.region, SUM(s.amount) AS total_spend FROM customers AS c JOIN shared_orders AS s ON s.customer_key = mask.main.mask_token(c.email, 'my-secret-key') GROUP BY ALL ORDER BY total_spend DESC;
+----
+a****@example.com	EU	200
+b**@example.org	US	65
+c****@example.net	US	15
+
+# MASKED_CUSTOMER_VIEW: token is 32 hex, redactions exact, SSN stays SSN-shaped
+# and decrypts back.
+query ITTTTT
+WITH v AS (SELECT c.id, c.ssn, mask.main.mask_token(c.email, 'my-secret-key') AS customer_key, mask.main.mask_redact(c.email, 'email') AS email_display, mask.main.mask_redact(c.card, 'last4') AS card_display, mask.main.mask_fpe(c.ssn, 'ssn', 'my-secret-key') AS ssn_protected FROM (VALUES (1, 'alice@example.com', '4012888888881881', '123-45-6789'), (2, 'bob@example.org', '5555555555554444', '987-65-4321')) AS c(id, email, card, ssn))
+SELECT id, regexp_full_match(customer_key, '[0-9a-f]{32}'), email_display, card_display,
+       regexp_full_match(ssn_protected, '\d{3}-\d{2}-\d{4}') AND ssn_protected <> ssn,
+       mask.main.mask_unfpe(ssn_protected, 'ssn', 'my-secret-key') = ssn
+FROM v ORDER BY id;
+----
+1	true	a****@example.com	************1881	true	true
+2	true	b**@example.org	************4444	true	true
+
+# ENCRYPT_AND_VERIFY: every card round-trips and the ciphertext differs.
+query TTT
+WITH enc AS (SELECT card, mask.main.mask_fpe(card, 'card', 'my-secret-key') AS encrypted FROM (VALUES ('4012888888881881'), ('5555555555554444'), ('4111111111111111')) AS cards(card)) SELECT card, encrypted <> card, mask.main.mask_unfpe(encrypted, 'card', 'my-secret-key') = card AS round_trips FROM enc ORDER BY card;
+----
+4012888888881881	true	true
+4111111111111111	true	true
+5555555555554444	true	true
+
+statement ok
+USE memory;
+
+statement ok
+DETACH mask;

@@ -15,35 +15,39 @@ use vgi::{
 use vgi_rpc::{Result, RpcError};
 
 use crate::arrow_io::text_str;
+use crate::examples::{Example, MASKED_CUSTOMER_VIEW, PSEUDONYMOUS_JOIN};
 use crate::mask::{self, RedactMode};
 
 /// Guaranteed-runnable, catalog-qualified examples (VGI509). Each `sql` is
 /// self-contained and re-runnable against an attached `mask` worker; the linter
 /// executes them and checks they run cleanly. These span all three masking
 /// strategies — the redaction outputs are deterministic and the FPE round-trip
-/// recovers its input, so no assertion depends on key-derived ciphertext.
-const EXECUTABLE_EXAMPLES: &str = r#"[
-  {
-    "description": "Irreversibly redact a card number, keeping only the last four digits.",
-    "sql": "SELECT mask.main.mask_redact('4012888888881881', 'last4') AS redacted"
-  },
-  {
-    "description": "Redact an email, keeping only the first local character and the domain.",
-    "sql": "SELECT mask.main.mask_redact('alice@example.com', 'email') AS redacted"
-  },
-  {
-    "description": "Format-preserving encrypt a card number into another Luhn-valid 16-digit card.",
-    "sql": "SELECT mask.main.mask_fpe('4012888888881881', 'card', 'my-secret-key') AS encrypted"
-  },
-  {
-    "description": "Round-trip an SSN: mask_unfpe reverses mask_fpe under the same key.",
-    "sql": "SELECT mask.main.mask_unfpe(mask.main.mask_fpe('123-45-6789', 'ssn', 'k'), 'ssn', 'k') AS recovered"
-  },
-  {
-    "description": "Produce a stable, non-reversible pseudonym for an account ID.",
-    "sql": "SELECT mask.main.mask_token('customer-42', 'my-secret-key') AS token"
-  }
-]"#;
+/// recovers its input, so no assertion depends on key-derived ciphertext. The
+/// composed pseudonymous join is offline and deterministic (fixed key, inline
+/// rows), so it is listed here too.
+const EXECUTABLE_EXAMPLES: [Example; 6] = [
+    (
+        "Irreversibly redact a card number, keeping only the last four digits.",
+        "SELECT mask.main.mask_redact('4012888888881881', 'last4') AS redacted",
+    ),
+    (
+        "Redact an email, keeping only the first local character and the domain.",
+        "SELECT mask.main.mask_redact('alice@example.com', 'email') AS redacted",
+    ),
+    (
+        "Format-preserving encrypt a card number into another Luhn-valid 16-digit card.",
+        "SELECT mask.main.mask_fpe('4012888888881881', 'card', 'my-secret-key') AS encrypted",
+    ),
+    (
+        "Round-trip an SSN: mask_unfpe reverses mask_fpe under the same key.",
+        "SELECT mask.main.mask_unfpe(mask.main.mask_fpe('123-45-6789', 'ssn', 'k'), 'ssn', 'k') AS recovered",
+    ),
+    (
+        "Produce a stable, non-reversible pseudonym for an account ID.",
+        "SELECT mask.main.mask_token('customer-42', 'my-secret-key') AS token",
+    ),
+    PSEUDONYMOUS_JOIN,
+];
 
 pub struct MaskRedact;
 
@@ -116,22 +120,32 @@ impl ScalarFunction for MaskRedact {
         // duckdb_functions().examples carrier drops descriptions.
         tags.push((
             "vgi.example_queries".into(),
-            crate::meta::example_queries_json(&[(ex_desc, ex_sql)]),
+            crate::meta::example_queries_json(&[(ex_desc, ex_sql), MASKED_CUSTOMER_VIEW]),
         ));
         // VGI509: at least one object carries verified-runnable, catalog-qualified
         // examples the linter actually executes.
-        tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
+        tags.push((
+            "vgi.executable_examples".into(),
+            crate::meta::example_queries_json(&EXECUTABLE_EXAMPLES),
+        ));
         FunctionMetadata {
             description: "Irreversible partial masking: mode 'last4' keeps the last four \
                           characters, 'first4' the first four, 'email' the first local char + \
                           domain, 'all' stars everything"
                 .into(),
             return_type: Some(DataType::Utf8),
-            examples: vec![FunctionExample {
-                sql: ex_sql.into(),
-                description: ex_desc.into(),
-                expected_output: None,
-            }],
+            examples: vec![
+                FunctionExample {
+                    sql: ex_sql.into(),
+                    description: ex_desc.into(),
+                    expected_output: None,
+                },
+                FunctionExample {
+                    sql: MASKED_CUSTOMER_VIEW.1.into(),
+                    description: MASKED_CUSTOMER_VIEW.0.into(),
+                    expected_output: None,
+                },
+            ],
             tags,
             ..Default::default()
         }

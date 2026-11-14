@@ -24,3 +24,10 @@ tasks:
   - name: "fpe_card"
     reference_sql: "SELECT mask.main.mask_fpe('4012888888881881', 'card', 'k')"
     ignore_column_names: true
+  # Composes mask_token (to re-key the raw emails onto the partner's tokens) with
+  # mask_redact (display). The tokens in the prompt are mask_token(email, 'k');
+  # dave has no orders and must not appear. Exact compare: the prompt pins both
+  # columns, their types, and the row order.
+  - name: "join_tokenized_orders"
+    reference_sql: "WITH extract(customer_key, amount) AS (VALUES ('b4c4ee4a0fd0d2aa204b70d31b8d8261', 300), ('3add195b10b533ebc79f8b4e2a57c3e1', 45), ('b4c4ee4a0fd0d2aa204b70d31b8d8261', 20), ('2d73051f9dcb7458a8e029355160c22e', 90), ('3add195b10b533ebc79f8b4e2a57c3e1', 10)), customers(email) AS (VALUES ('alice@example.com'), ('bob@example.org'), ('carol@example.net'), ('dave@example.com')) SELECT mask.main.mask_redact(c.email, 'email') AS customer, CAST(SUM(e.amount) AS BIGINT) AS total FROM customers AS c JOIN extract AS e ON e.customer_key = mask.main.mask_token(c.email, 'k') GROUP BY c.email ORDER BY total DESC"
+    ignore_column_names: true

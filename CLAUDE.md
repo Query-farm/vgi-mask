@@ -20,13 +20,14 @@ for tokenization, SHA-256 for key derivation.
 ```
 Cargo.toml                          workspace; pins vgi = "0.51.0" (vgi.v3 3.3 / haybarn 2.0), arrow 59.2, fpe/aes/sha2/hmac/hex
 crates/mask-worker/
-  src/main.rs                       Worker::new(); registers the scalars
-  src/lib.rs                        lib target re-exporting `mask` for integration tests
+  src/main.rs                       native binary: build_worker().run()
+  src/lib.rs                        build_worker(): registers the scalars + catalog metadata; re-exports `mask`
+  src/examples.rs                   composed (multi-function) example SQL, defined once, reused by lib.rs + scalar/*.rs
   src/mask.rs                       PURE engine (no Arrow): FF1 FPE + token + redact + unit tests
   src/arrow_io.rs                   VARCHAR cell reads + in-process scalar test harness
-  src/scalar/{fpe,token,redact,version,mod}.rs   thin Arrow scalar adapters
+  src/scalar/{fpe,token,redact,mod}.rs   thin Arrow scalar adapters
   tests/roundtrip.rs                integration tests (round-trip, Luhn, determinism)
-test/sql/{fpe,mask}.test            haybarn-unittest sqllogictest — authoritative E2E
+test/sql/{fpe,mask,compose}.test    haybarn-unittest sqllogictest — authoritative E2E
 Makefile                            test / test-unit / test-sql / lint / fmt / build / clean
 ```
 
@@ -77,8 +78,8 @@ the token HMAC key). FF1 with `&[]` tweak and `FlexibleNumeralString`.
    0/1/2; no named args, no arity overloads. All returns are VARCHAR, so no
    explicit `arrow_type` is needed (LIST/STRUCT/TIMESTAMPTZ would require it).
 
-6. **bin + lib both compile `mask.rs`.** `main.rs` has `mod mask;` (binary copy);
-   `lib.rs` re-exports `pub mod mask;` for `tests/`.
+6. **All registration lives in the lib.** `main.rs` and the `mask-wasm` crate
+   both call `mask_worker::build_worker()`; only the transport differs.
 
 7. **Only FF1, no FF3-1.** The `fpe` crate has no FF3-1, and FF3 has known
    tweak-size weaknesses — so FF1 is the single vetted primitive (see README).

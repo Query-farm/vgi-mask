@@ -44,6 +44,19 @@ SELECT mask.main.mask_fpe('4012888888881881', 'card', 'my-secret-key');
 
 -- Round-trip an SSN: mask_unfpe reverses mask_fpe under the same key and profile.
 SELECT mask.main.mask_unfpe(mask.main.mask_fpe('123-45-6789', 'ssn', 'k'), 'ssn', 'k');
+
+-- Combine them: join an orders extract shared with tokenized emails back to the customer
+-- table (tokenize with the same key), showing only redacted emails.
+-- a****@example.com EU 200 · b**@example.org US 65 · c****@example.net US 15
+WITH customers(email, region) AS (VALUES ('alice@example.com', 'EU'), ('bob@example.org', 'US'), ('carol@example.net', 'US')),
+     shared_orders AS (
+       SELECT mask.main.mask_token(o.email, 'my-secret-key') AS customer_key, o.amount
+       FROM (VALUES ('alice@example.com', 120), ('bob@example.org', 40), ('alice@example.com', 80),
+                    ('carol@example.net', 15), ('bob@example.org', 25)) AS o(email, amount))
+SELECT mask.main.mask_redact(c.email, 'email') AS customer, c.region, SUM(s.amount) AS total_spend
+FROM customers AS c
+JOIN shared_orders AS s ON s.customer_key = mask.main.mask_token(c.email, 'my-secret-key')
+GROUP BY ALL ORDER BY total_spend DESC;
 ```
 
 Attaching needs no secret or credential: every function takes its key as an argument. Read the honest caveats below on key management before passing keys as SQL literals outside a demo.
