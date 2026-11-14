@@ -228,3 +228,7 @@ Written by [Query.Farm](https://query.farm).
 
 Copyright 2026 Query Farm LLC - https://query.farm
 
+
+## Executed notebooks
+
+See [notebooks/](notebooks/) for a portable example comparing tokenized joins, redacted labels and key-version compatibility.
