@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "notebook_sha256": "972d4c12570a89b7e57518dbd61895a7c8fc37ec03f74c866b9eba5f72c11a40",
+  "catalog_sha256": "ae392cd7c264a761deb8bff686117edb81aa4873ddbd27ee7130aab7e9056cce",
+  "worker_revision": "v0.4.0",
+  "status": "success",
+  "executed_at": "2026-11-14T19:53:49.748308+00:00",
+  "engine": "Haybarn 2.0.0rc11 / VGI e75482339d",
+  "command": "uv run --locked --extra runner vgi-notebooks",
+  "catalog_aliases": [
+    "mask"
+  ],
+  "cells": [
+    {
+      "id": "fpe-parameters",
+      "status": "success",
+      "execution_count": 1,
+      "source_sha256": "b26e5af81f74e58459fc972f8587a9aea6fe0b9d8cb3bc3cb17aeb2ee0599f75",
+      "outputs_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "fpe-install",
+      "status": "success",
+      "execution_count": 2,
+      "source_sha256": "e2b209dd10549d7cdaae2c210890fa8efa313c7ef8d5b7206ccf6ca2bc7f8601",
+      "outputs_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "fpe-setup",
+      "status": "success",
+      "execution_count": 3,
+      "source_sha256": "020fe78b4b88616add196b40e92871d44c9ada84af3120f16cf40cef451090f6",
+      "outputs_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "fpe-attach",
+      "status": "success",
+      "execution_count": 4,
+      "source_sha256": "fe1c2f51b1fb00cf98d23f33d93d7bb83cd243d35bac09d4637918d929b1b401",
+      "outputs_sha256": "746da56229b9978a870f01fc377f630925564b55326e96d7a176684c230f2db8"
+    },
+    {
+      "id": "fpe-encrypt",
+      "status": "success",
+      "execution_count": 5,
+      "source_sha256": "1f5f54fd960aff2ae090769a6422ec19b5f17653335c3af047b9dc8ccac621a2",
+      "outputs_sha256": "23c8940505861b0952ea3eeab2c75a52fa17ba150448cdb4800ec9653ee5050b"
+    },
+    {
+      "id": "fpe-capture",
+      "status": "success",
+      "execution_count": 6,
+      "source_sha256": "980ea209cefb1d50edc06c8015f1316036eb067300a859d6d2f1586987caae73",
+      "outputs_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "fpe-result",
+      "status": "success",
+      "execution_count": 7,
+      "source_sha256": "4a2ba173f6c0d44f710f5e50cb6bc2bbda0aca592a896be1f84e52ae87193116",
+      "outputs_sha256": "02c4bb7faf8f1014419720c00fa88108628316ab281da2bc7e0ccffd4313e60a"
+    },
+    {
+      "id": "fpe-summary",
+      "status": "success",
+      "execution_count": 8,
+      "source_sha256": "5f43ea47a9585355af9539ff8015318a53d082097ce6756154e7f9e7360a2c84",
+      "outputs_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "fpe-chart",
+      "status": "success",
+      "execution_count": 9,
+      "source_sha256": "b1906da3fff8341aa26a6612274f54df8b96b35a0073fddb23919be26a4772b2",
+      "outputs_sha256": "2018fadb3ffee342eb63333896b2440cbc310ae630a7cc2380da473350f45fff"
+    },
+    {
+      "id": "fpe-checks",
+      "status": "success",
+      "execution_count": 10,
+      "source_sha256": "a22e3e91b3204abbff04d41ee900aeb3104e7c552a511c997102cce3bf34064d",
+      "outputs_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "fpe-check-result",
+      "status": "success",
+      "execution_count": 11,
+      "source_sha256": "240908be32d0ae90f970a8cbd4cf6ffbab569e43e110ad761e40b132deca39b5",
+      "outputs_sha256": "df105f5141535e0fa59bf77489e585d977954bf72d6a784394395fbc8dbe5639"
+    },
+    {
+      "id": "fpe-cleanup",
+      "status": "success",
+      "execution_count": 12,
+      "source_sha256": "253dd6f37aa50e657f869d6ba37c2ec4a5b80fcdcb8f313c72b297ad1565dd86",
+      "outputs_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  ]
+}

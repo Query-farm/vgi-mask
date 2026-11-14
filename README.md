@@ -231,4 +231,4 @@ Copyright 2026 Query Farm LLC - https://query.farm
 
 ## Executed notebooks
 
-See [notebooks/](notebooks/) for a portable example comparing tokenized joins, redacted labels and key-version compatibility.
+See [notebooks/](notebooks/) for portable examples comparing tokenized joins, redacted labels and key-version compatibility, plus format-preserving recovery and small-domain pass-through.

@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "catalogs": {
+    "released": {
+      "path": "coverage/catalog-released.json",
+      "sha256": "ae392cd7c264a761deb8bff686117edb81aa4873ddbd27ee7130aab7e9056cce",
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T19:56:16.609822+00:00",
+        "catalog_sha256": "ae392cd7c264a761deb8bff686117edb81aa4873ddbd27ee7130aab7e9056cce",
+        "notes": "All four scalar surfaces included, no names or profiles excluded from the named-surface denominator. Named-surface coverage does not imply every argument mode/format is exercised. Exhaustive public-main registration at 8df17fd6b718a0f693b29cafbfa66f73926751f0 finds exactly four scalar names and no relation/macro/authentication/write surfaces. Complete source diff after v0.4.0 only adds documentation, composed examples and a metadata test; pure masking engine, Arrow execution, parameter signatures and dependency locks are unchanged. Current-interface mappings are explicitly compatibility-reviewed against the actual released runtime. No current source build/exact-current execution is claimed."
+      }
+    },
+    "current": {
+      "path": "coverage/catalog-current.json",
+      "sha256": "72c8b03f88835e4507e3cf7b299cfa68fd909d7db1b94498ca7f9c7acf4959a8",
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T19:56:16.609822+00:00",
+        "catalog_sha256": "72c8b03f88835e4507e3cf7b299cfa68fd909d7db1b94498ca7f9c7acf4959a8",
+        "notes": "All four scalar surfaces included, no names or profiles excluded from the named-surface denominator. Named-surface coverage does not imply every argument mode/format is exercised. Exhaustive public-main registration at 8df17fd6b718a0f693b29cafbfa66f73926751f0 finds exactly four scalar names and no relation/macro/authentication/write surfaces. Complete source diff after v0.4.0 only adds documentation, composed examples and a metadata test; pure masking engine, Arrow execution, parameter signatures and dependency locks are unchanged. Current-interface mappings are explicitly compatibility-reviewed against the actual released runtime. No current source build/exact-current execution is claimed."
+      }
+    }
+  },
+  "notebooks": [
+    {
+      "path": "01_join_keys_and_redacted_labels.ipynb",
+      "sha256": "29e53f8e0575aee39b7bda88f519d77a8f48ecfd96193846b6369f30096e0cfd",
+      "execution": {
+        "path": "coverage/run-01.json",
+        "sha256": "070989ecc7f0670620873d0ac911472506c86e39ccc2bddd9457c39804bc526d"
+      }
+    },
+    {
+      "path": "02_a_round_trip_does_not_prove_encryption.ipynb",
+      "sha256": "972d4c12570a89b7e57518dbd61895a7c8fc37ec03f74c866b9eba5f72c11a40",
+      "execution": {
+        "path": "coverage/run-02.json",
+        "sha256": "8bdb5c710056d0114b83542f86bba5c5f1fdda53e73e36f6ee788295cc2b1194"
+      }
+    }
+  ],
+  "examples": [
+    {
+      "object": {
+        "schema": "main",
+        "name": "mask_token"
+      },
+      "notebook": "01_join_keys_and_redacted_labels.ipynb",
+      "sql": [
+        {
+          "cell": "60226a5a",
+          "reference": "mask.main.mask_token"
+        }
+      ],
+      "narrative_cells": [
+        "0284c0df"
+      ],
+      "result_cells": [
+        "10b3b99d",
+        "9b43a09c",
+        "6304961f"
+      ],
+      "interpretation_cells": [
+        "6304961f"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T19:56:16.609822+00:00",
+        "notebook_sha256": "29e53f8e0575aee39b7bda88f519d77a8f48ecfd96193846b6369f30096e0cfd",
+        "catalog_sha256": [
+          "ae392cd7c264a761deb8bff686117edb81aa4873ddbd27ee7130aab7e9056cce",
+          "72c8b03f88835e4507e3cf7b299cfa68fd909d7db1b94498ca7f9c7acf4959a8"
+        ],
+        "purpose": "Preserve exact-string cross-table equality while exposing incompatible token key versions.",
+        "finding": "Aligned tokens preserve nine distinct matched orders and USD555. The fixed-v1 customer mapping matches nine orders under v1 but none when orders use v2; aligned mappings still match. Missing and unknown identifiers stay unmatched. This small-fixture reconciliation does not prove global token uniqueness or anonymization."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "mask_redact"
+      },
+      "notebook": "01_join_keys_and_redacted_labels.ipynb",
+      "sql": [
+        {
+          "cell": "60226a5a",
+          "reference": "mask.main.mask_redact"
+        }
+      ],
+      "narrative_cells": [
+        "c109be09"
+      ],
+      "result_cells": [
+        "10b3b99d",
+        "9b43a09c",
+        "6304961f"
+      ],
+      "interpretation_cells": [
+        "6304961f"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T19:56:16.609822+00:00",
+        "notebook_sha256": "29e53f8e0575aee39b7bda88f519d77a8f48ecfd96193846b6369f30096e0cfd",
+        "catalog_sha256": [
+          "ae392cd7c264a761deb8bff686117edb81aa4873ddbd27ee7130aab7e9056cce",
+          "72c8b03f88835e4507e3cf7b299cfa68fd909d7db1b94498ca7f9c7acf4959a8"
+        ],
+        "purpose": "Separate a display value from a unique join key and quantify multiplicity inflation.",
+        "finding": "Four of six customers share redacted display values. A deliberately incorrect display-value join retains nine distinct orders but produces 16 rows / USD 970, seven extra rows/USD415 above the reference. Redaction ignores token key versions, so that inflation stays fixed."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "mask_fpe"
+      },
+      "notebook": "02_a_round_trip_does_not_prove_encryption.ipynb",
+      "sql": [
+        {
+          "cell": "fpe-encrypt",
+          "reference": "mask.main.mask_fpe"
+        }
+      ],
+      "narrative_cells": [
+        "fpe-encrypt-story"
+      ],
+      "result_cells": [
+        "fpe-result",
+        "fpe-chart"
+      ],
+      "interpretation_cells": [
+        "fpe-chart"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T19:56:16.609822+00:00",
+        "notebook_sha256": "972d4c12570a89b7e57518dbd61895a7c8fc37ec03f74c866b9eba5f72c11a40",
+        "catalog_sha256": [
+          "ae392cd7c264a761deb8bff686117edb81aa4873ddbd27ee7130aab7e9056cce",
+          "72c8b03f88835e4507e3cf7b299cfa68fd909d7db1b94498ca7f9c7acf4959a8"
+        ],
+        "purpose": "Separate selected-alphabet domain eligibility and visible transformation from successful recovery.",
+        "finding": "The default digits profile changes two of eight present values and deliberately passes six below-minimum rows through; the ninth row remains NULL. Under alnum, five present values become eligible/changed and three pass through. Punctuation and length remain intact; preserved structure and deterministic output do not establish privacy."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "mask_unfpe"
+      },
+      "notebook": "02_a_round_trip_does_not_prove_encryption.ipynb",
+      "sql": [
+        {
+          "cell": "fpe-encrypt",
+          "reference": "mask.main.mask_unfpe"
+        }
+      ],
+      "narrative_cells": [
+        "fpe-encrypt-story"
+      ],
+      "result_cells": [
+        "fpe-result",
+        "fpe-chart",
+        "fpe-check-result"
+      ],
+      "interpretation_cells": [
+        "fpe-check-result"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T19:56:16.609822+00:00",
+        "notebook_sha256": "972d4c12570a89b7e57518dbd61895a7c8fc37ec03f74c866b9eba5f72c11a40",
+        "catalog_sha256": [
+          "ae392cd7c264a761deb8bff686117edb81aa4873ddbd27ee7130aab7e9056cce",
+          "72c8b03f88835e4507e3cf7b299cfa68fd909d7db1b94498ca7f9c7acf4959a8"
+        ],
+        "purpose": "Verify exact recovery with matching profile/key while detecting the misleading pass-through success case.",
+        "finding": "All eight nonmissing inputs recover exactly under either digits or alnum, including rows that never changed. NULL remains missing. Ten independent accounting/shape/boundary checks pass; recovery is neither evidence of every input being transformed nor a production key-management test."
+      }
+    }
+  ]
+}

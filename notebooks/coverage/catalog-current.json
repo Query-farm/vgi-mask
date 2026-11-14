@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "repository": "Query-farm/vgi-mask",
+  "revision": "8df17fd6b718a0f693b29cafbfa66f73926751f0",
+  "captured_at": "2026-11-14T19:56:16.609822+00:00",
+  "default_schema": "main",
+  "scope": "all_public_functions_and_tables",
+  "complete": true,
+  "evidence": [
+    {
+      "path": "coverage/catalog-provenance.json",
+      "sha256": "e79494fd14ea20901d45e39c3199bb769607e6c60152886400a64a564f511d10",
+      "description": "Precise runtime/source identities and scope of compatibility review."
+    },
+    {
+      "path": "coverage/current-source-registration.json",
+      "sha256": "ae4e8c7d834703036eed69f1980778af51cbb4fb9156780f7b14aefc85472fc5",
+      "description": "Exhaustive current public registration/declarations, immutable source links/hashes and full source diff. Current runtime not rebuilt."
+    }
+  ],
+  "objects": [
+    {
+      "schema": "main",
+      "name": "mask_token",
+      "kind": "function",
+      "signatures": [
+        "mask_token(VARCHAR, VARCHAR) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "mask_redact",
+      "kind": "function",
+      "signatures": [
+        "mask_redact(VARCHAR, VARCHAR) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "mask_fpe",
+      "kind": "function",
+      "signatures": [
+        "mask_fpe(VARCHAR, VARCHAR, VARCHAR) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "mask_unfpe",
+      "kind": "function",
+      "signatures": [
+        "mask_unfpe(VARCHAR, VARCHAR, VARCHAR) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    }
+  ]
+}

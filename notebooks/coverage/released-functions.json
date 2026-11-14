@@ -1,0 +1,185 @@
+{
+  "query": "SELECT * FROM duckdb_functions() WHERE database_name='mask'",
+  "columns": [
+    "database_name",
+    "database_oid",
+    "schema_name",
+    "function_name",
+    "alias_of",
+    "function_type",
+    "description",
+    "comment",
+    "tags",
+    "return_type",
+    "parameters",
+    "parameter_types",
+    "varargs",
+    "macro_definition",
+    "has_side_effects",
+    "internal",
+    "extension_name",
+    "function_oid",
+    "examples",
+    "stability",
+    "categories"
+  ],
+  "rows": [
+    [
+      "mask",
+      "22592",
+      "main",
+      "mask_token",
+      null,
+      "scalar",
+      "Deterministic pseudonym (HMAC-SHA-256) of a value under a key; same input+key yields the same token, so it is joinable across tables. Not reversible.",
+      null,
+      {
+        "vgi.category": "Tokenization",
+        "vgi.doc_llm": "## `mask_token(value, key)`\n\nProduces a stable, **one-way pseudonym** for a value using **HMAC-SHA-256** under a secret `key`, returned as a hex string. The mapping is deterministic: the same `value` and `key` always yield the same token.\n\n### When to use\nChoose tokenization when you need to de-identify an identifier *and* keep it joinable. Because identical inputs map to identical tokens, you can replace an account ID or email with its token in two different tables and still join on it — referential integrity is preserved without ever exposing the original. Unlike `mask_fpe`, this is **not reversible**; unlike `mask_redact`, it does not preserve the input's shape.\n\n### Inputs\n- `value` — the identifier to tokenize (`VARCHAR`). NULL passes through to NULL.\n- `key` — secret key string; the HMAC key is domain-separated from the FPE key.\n\n### Output\nA hexadecimal HMAC-SHA-256 token (`VARCHAR`). The original value cannot be recovered from it.\n\n### Behavior & edge cases\n- Deterministic and collision-resistant; same input+key ⇒ same token across runs and tables, so it is safe for joins.\n- **Caution:** deterministic tokens are frequency-analyzable on low-cardinality columns — equal inputs always produce equal tokens.\n- NULL input → NULL; an empty `key` raises an error.",
+        "vgi.doc_md": "# Deterministic Tokenize\n\n`mask_token(value, key)` returns a stable, non-reversible HMAC-SHA-256 pseudonym for a value, as a hex string.\n\n## Usage\n\n```sql\nSELECT mask.main.mask_token('customer-42', 'my-secret-key');\n```\n\nThe same input and key always produce the same token, so tokens stay joinable across tables.\n\n## Notes\n\n- Tokens are one-way: the original value cannot be recovered (use `mask_fpe` if you need reversibility).\n- Deterministic output is frequency-analyzable on low-cardinality data.\n- NULL in → NULL out; an empty key is an error.",
+        "vgi.example_queries": "[\n  {\"description\": \"Produce a stable, non-reversible pseudonym for an account ID; the same input and key always yield the same token, so it stays joinable across tables.\", \"sql\": \"SELECT mask.main.mask_token('customer-42', 'my-secret-key');\"}\n]",
+        "vgi.keywords": "[\"mask_token\", \"tokenize\", \"tokenization\", \"pseudonym\", \"pseudonymization\", \"HMAC\", \"deterministic masking\", \"joinable\", \"referential integrity\", \"de-identify\", \"hash\"]",
+        "vgi.title": "Deterministic Tokenize Value"
+      },
+      "VARCHAR",
+      [
+        "value",
+        "key"
+      ],
+      [
+        "VARCHAR",
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22598,
+      [
+        "SELECT mask.main.mask_token('customer-42', 'my-secret-key');"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "mask",
+      "22592",
+      "main",
+      "mask_redact",
+      null,
+      "scalar",
+      "Irreversible partial masking: mode 'last4' keeps the last four characters, 'first4' the first four, 'email' the first local char + domain, 'all' stars everything",
+      null,
+      {
+        "vgi.category": "Redaction",
+        "vgi.doc_llm": "## `mask_redact(value, mode)`\n\nIrreversibly **partially masks** a value for display, replacing the sensitive portion with `*` characters while keeping a small, non-secret hint visible. No key is involved and the original value cannot be recovered.\n\n### When to use\nUse this for human-facing display masking — showing the last four digits of a card on a receipt, the first character of an email in a UI, or fully starring a column in an export. It is the simplest masking strategy; choose `mask_token` instead when you need joinable pseudonyms, or `mask_fpe` when you need to reverse the transform later.\n\n### Inputs\n- `value` — the string to redact (`VARCHAR`). NULL passes through to NULL.\n- `mode` — redaction strategy (see below).\n\n### Modes\n| mode | keeps | example |\n|---|---|---|\n| `last4` | last four characters | `4012888888881881` → `************1881` |\n| `first4` | first four characters | `4012888888881881` → `4012************` |\n| `email` | first local char + `@domain` | `alice@example.com` → `a****@example.com` |\n| `all` | nothing | `secret` → `******` |\n\n### Behavior & edge cases\n- Irreversible: the starred characters are discarded, not encrypted.\n- NULL input → NULL; an unknown `mode` raises an error.",
+        "vgi.doc_md": "# Irreversible Partial Redaction\n\n`mask_redact(value, mode)` partially masks a value for display by starring out the sensitive portion. It is one-way — the original cannot be recovered.\n\n## Usage\n\n```sql\nSELECT mask.main.mask_redact('4012888888881881', 'last4'); -- ************1881\nSELECT mask.main.mask_redact('alice@example.com', 'email'); -- a****@example.com\n```\n\n## Modes\n\n- `last4` — keep only the last four characters.\n- `first4` — keep only the first four characters.\n- `email` — keep the first local character plus the `@domain`.\n- `all` — star out everything.\n\n## Notes\n\n- For joinable pseudonyms use `mask_token`; for reversible masking use `mask_fpe`.\n- NULL in → NULL out; an unknown mode is an error.",
+        "vgi.example_queries": "[\n  {\"description\": \"Irreversibly redact a card number, keeping only the last four digits (************1881).\", \"sql\": \"SELECT mask.main.mask_redact('4012888888881881', 'last4');\"}\n]",
+        "vgi.executable_examples": "[\n  {\n    \"description\": \"Irreversibly redact a card number, keeping only the last four digits.\",\n    \"sql\": \"SELECT mask.main.mask_redact('4012888888881881', 'last4') AS redacted\"\n  },\n  {\n    \"description\": \"Redact an email, keeping only the first local character and the domain.\",\n    \"sql\": \"SELECT mask.main.mask_redact('alice@example.com', 'email') AS redacted\"\n  },\n  {\n    \"description\": \"Format-preserving encrypt a card number into another Luhn-valid 16-digit card.\",\n    \"sql\": \"SELECT mask.main.mask_fpe('4012888888881881', 'card', 'my-secret-key') AS encrypted\"\n  },\n  {\n    \"description\": \"Round-trip an SSN: mask_unfpe reverses mask_fpe under the same key.\",\n    \"sql\": \"SELECT mask.main.mask_unfpe(mask.main.mask_fpe('123-45-6789', 'ssn', 'k'), 'ssn', 'k') AS recovered\"\n  },\n  {\n    \"description\": \"Produce a stable, non-reversible pseudonym for an account ID.\",\n    \"sql\": \"SELECT mask.main.mask_token('customer-42', 'my-secret-key') AS token\"\n  }\n]",
+        "vgi.keywords": "[\"mask_redact\", \"redact\", \"redaction\", \"partial masking\", \"star out\", \"last4\", \"first4\", \"mask email\", \"display masking\", \"de-identify\", \"irreversible\", \"obfuscate\"]",
+        "vgi.title": "Irreversible Partial Redaction"
+      },
+      "VARCHAR",
+      [
+        "value",
+        "mode"
+      ],
+      [
+        "VARCHAR",
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22597,
+      [
+        "SELECT mask.main.mask_redact('4012888888881881', 'last4');"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "mask",
+      "22592",
+      "main",
+      "mask_fpe",
+      null,
+      "scalar",
+      "Format-preserving encrypt a value under a shape profile (card/ssn/digits/alnum/email) and key; output keeps the input shape",
+      null,
+      {
+        "vgi.category": "Format-Preserving Encryption",
+        "vgi.doc_llm": "## `mask_fpe(value, format, key)`\n\nReversibly encrypts a sensitive string under a secret `key` using **FF1 format-preserving encryption** (FF1 over AES-256), so the ciphertext keeps the *shape* of the input and can be substituted wherever the original was used.\n\n### When to use\nReach for this when you need to de-identify PII but downstream consumers still expect the original format — masked views over cards/SSNs/emails, generating referentially-consistent test data, or sharing data while keeping it reversible for authorized holders of the key. If you never need to recover the value, prefer `mask_token` (one-way pseudonym) or `mask_redact` (display masking).\n\n### Inputs\n- `value` — the string to encrypt (`VARCHAR`). NULL passes through to NULL.\n- `format` — shape profile: `card`, `ssn`, `digits`, `alnum`, or `email`.\n- `key` — secret key string; the AES key is derived from it via SHA-256.\n\n### Output\nA `VARCHAR` ciphertext with the same shape as the input. `card` stays a Luhn-valid 16-digit number, `ssn` keeps its dashes, `email` keeps `@domain` and FPEs only the local part, `digits`/`alnum` keep their length and character class.\n\n### Behavior & edge cases\n- Reverse with `mask_unfpe` under the **same** `format` and `key`.\n- **Small-domain pass-through:** FF1 refuses domains below 1,000,000 (radix 10 ⇒ fewer than 6 digits; radix 62 ⇒ fewer than 4 chars), so very short values are returned unchanged — they still round-trip.\n- NULL input → NULL; an unknown `format` or an empty `key` raises an error.",
+        "vgi.doc_md": "# Format-Preserving Encrypt\n\n`mask_fpe(value, format, key)` reversibly encrypts a value while preserving its shape, using FF1 format-preserving encryption over AES-256.\n\n## Usage\n\n```sql\n-- card stays a Luhn-valid 16-digit number\nSELECT mask.main.mask_fpe('4012888888881881', 'card', 'my-secret-key');\n-- SSN keeps its dashes\nSELECT mask.main.mask_fpe('123-45-6789', 'ssn', 'my-secret-key');\n```\n\nThe `format` profile selects the shape to preserve: `card`, `ssn`, `digits`, `alnum`, or `email`.\n\n## Notes\n\n- Reverse the transform with `mask_unfpe` under the same `format` and `key`.\n- Values too short for FF1's minimum domain are passed through unchanged but still round-trip.\n- NULL in → NULL out; an unknown format or empty key is an error.",
+        "vgi.example_queries": "[\n  {\"description\": \"Format-preserving encrypt a credit-card number; the result is a different but still Luhn-valid 16-digit card.\", \"sql\": \"SELECT mask.main.mask_fpe('4012888888881881', 'card', 'my-secret-key');\"}\n]",
+        "vgi.keywords": "[\"mask_fpe\", \"format-preserving encryption\", \"FPE\", \"FF1\", \"encrypt\", \"tokenize card\", \"mask credit card\", \"mask SSN\", \"mask email\", \"reversible masking\", \"de-identify\", \"anonymize\"]",
+        "vgi.title": "Format-Preserving Encrypt Value"
+      },
+      "VARCHAR",
+      [
+        "value",
+        "format",
+        "key"
+      ],
+      [
+        "VARCHAR",
+        "VARCHAR",
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22596,
+      [
+        "SELECT mask.main.mask_fpe('4012888888881881', 'card', 'my-secret-key');"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "mask",
+      "22592",
+      "main",
+      "mask_unfpe",
+      null,
+      "scalar",
+      "Inverse of mask_fpe: recover the original value under the same format profile and key",
+      null,
+      {
+        "vgi.category": "Format-Preserving Encryption",
+        "vgi.doc_llm": "## `mask_unfpe(value, format, key)`\n\nThe **inverse of `mask_fpe`**: recovers the original plaintext from a format-preserving ciphertext using FF1 decryption over AES-256.\n\n### When to use\nUse this on the authorized side of a masking pipeline to recover a value that was protected with `mask_fpe`. It only succeeds when you supply the **same** `format` profile and the **same** `key` that produced the ciphertext — a different key yields different (wrong) output, which is the point of keyed encryption.\n\n### Inputs\n- `value` — the format-preserving ciphertext to reverse (`VARCHAR`).\n- `format` — the profile used to encrypt: `card`, `ssn`, `digits`, `alnum`, or `email`.\n- `key` — the same secret key that was used with `mask_fpe`.\n\n### Output\nThe recovered original `VARCHAR` value.\n\n### Behavior & edge cases\n- For `card`, decryption re-derives the Luhn check digit, so the original 16-digit number is reproduced exactly.\n- Values that were passed through unchanged by `mask_fpe` (small-domain rule) decrypt to themselves.\n- NULL input → NULL; an unknown `format` or an empty `key` raises an error.",
+        "vgi.doc_md": "# Format-Preserving Decrypt\n\n`mask_unfpe(value, format, key)` reverses `mask_fpe`, recovering the original value from a format-preserving ciphertext.\n\n## Usage\n\n```sql\nSELECT mask.main.mask_unfpe(\n  mask.main.mask_fpe('123-45-6789', 'ssn', 'k'), 'ssn', 'k');\n-- => '123-45-6789'\n```\n\n## Notes\n\n- You must pass the same `format` and `key` used to encrypt; a different key produces incorrect output.\n- `card` decryption re-derives the Luhn check digit so the round-trip is exact.\n- NULL in → NULL out; an unknown format or empty key is an error.",
+        "vgi.example_queries": "[\n  {\"description\": \"Round-trip an SSN: mask_unfpe reverses mask_fpe under the same format and key, recovering '123-45-6789'.\", \"sql\": \"SELECT mask.main.mask_unfpe(mask.main.mask_fpe('123-45-6789', 'ssn', 'my-secret-key'), 'ssn', 'my-secret-key');\"}\n]",
+        "vgi.keywords": "[\"mask_unfpe\", \"decrypt\", \"format-preserving decryption\", \"FPE\", \"FF1\", \"reverse mask\", \"unmask\", \"recover original\", \"round-trip\"]",
+        "vgi.title": "Format-Preserving Decrypt Value"
+      },
+      "VARCHAR",
+      [
+        "value",
+        "format",
+        "key"
+      ],
+      [
+        "VARCHAR",
+        "VARCHAR",
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22599,
+      [
+        "SELECT mask.main.mask_unfpe(mask.main.mask_fpe('123-45-6789', 'ssn', 'my-secret-key'), 'ssn', 'my-secret-key');"
+      ],
+      "CONSISTENT",
+      []
+    ]
+  ]
+}

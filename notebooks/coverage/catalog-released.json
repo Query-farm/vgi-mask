@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "repository": "Query-farm/vgi-mask",
+  "revision": "v0.4.0",
+  "captured_at": "2026-11-14T19:56:16.609822+00:00",
+  "default_schema": "main",
+  "scope": "all_public_functions_and_tables",
+  "complete": true,
+  "evidence": [
+    {
+      "path": "coverage/catalog-provenance.json",
+      "sha256": "e79494fd14ea20901d45e39c3199bb769607e6c60152886400a64a564f511d10",
+      "description": "Precise runtime/source identities and scope of compatibility review."
+    },
+    {
+      "path": "coverage/released-functions.json",
+      "sha256": "803aeda20d1e96a9db800fcc50e98f397dc42f46c928d27db718823dd6db2512",
+      "description": "Complete actual worker-filtered duckdb_functions() export; explicit empty relation inventories retained."
+    },
+    {
+      "path": "coverage/released-tables.json",
+      "sha256": "534ae48a05d0ce983cd099851a65327b25d879ac0f8e69568be05032152115fc",
+      "description": "Complete actual worker-filtered duckdb_tables() export; explicit empty relation inventories retained."
+    },
+    {
+      "path": "coverage/released-views.json",
+      "sha256": "5a789be1c6322bc14465393f4a233f0e11492d6fa6f59da18ad386d0adfa1a9f",
+      "description": "Complete actual worker-filtered duckdb_views() export; explicit empty relation inventories retained."
+    },
+    {
+      "path": "coverage/released-database.json",
+      "sha256": "bc6918aabba66a9e2e097ddaa29dc277b9477b6bcc320f3532add202db887220",
+      "description": "Actual catalog title/subtitle/metadata."
+    }
+  ],
+  "objects": [
+    {
+      "schema": "main",
+      "name": "mask_token",
+      "kind": "function",
+      "signatures": [
+        "mask_token(VARCHAR, VARCHAR) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "mask_redact",
+      "kind": "function",
+      "signatures": [
+        "mask_redact(VARCHAR, VARCHAR) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "mask_fpe",
+      "kind": "function",
+      "signatures": [
+        "mask_fpe(VARCHAR, VARCHAR, VARCHAR) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "mask_unfpe",
+      "kind": "function",
+      "signatures": [
+        "mask_unfpe(VARCHAR, VARCHAR, VARCHAR) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    }
+  ]
+}
