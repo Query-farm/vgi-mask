@@ -127,15 +127,18 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             ),
             (
                 "vgi.doc_llm".to_string(),
-                "Mask sensitive values in SQL three ways: (1) format-preserving encryption \
-                 (mask_fpe / mask_unfpe) that reversibly encrypts a value under a key while \
-                 keeping its shape — a 16-digit card stays a Luhn-valid 16-digit card, an SSN \
-                 stays SSN-shaped, an email keeps its @domain; (2) deterministic tokenization \
-                 (mask_token) that produces a stable, non-reversible HMAC-SHA-256 pseudonym so \
-                 the same input always maps to the same token and stays joinable across tables; \
-                 (3) irreversible partial redaction (mask_redact) that keeps only the last four \
-                 / first four characters, an email's first char + domain, or stars everything. \
-                 Use for de-identifying PII (cards, SSNs, emails, account IDs) in query results, \
+                "Mask sensitive values in SQL with three de-identification strategies, chosen \
+                 by whether the original must be recoverable. Format-preserving encryption \
+                 (NIST FF1 over AES-256) reversibly encrypts a value under a key while keeping \
+                 its shape: a 16-digit card stays a Luhn-valid 16-digit card, an SSN stays \
+                 SSN-shaped, an email keeps its @domain, and the same key decrypts it. \
+                 Deterministic tokenization produces a stable, non-reversible HMAC-SHA-256 \
+                 pseudonym, so the same input always maps to the same token and masked columns \
+                 stay joinable across tables. Partial redaction irreversibly stars out a value \
+                 for display, keeping only a small hint such as the last four characters. All \
+                 three are scalar functions applied row by row. Keys are passed in by the \
+                 caller; key management (KMS/HSM, rotation) is out of scope. Use for \
+                 de-identifying PII (cards, SSNs, emails, account IDs) in query results, \
                  building masked views, and generating referentially-consistent test data."
                     .to_string(),
             ),
