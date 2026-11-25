@@ -9,7 +9,7 @@
 #
 # The SQL E2E suite drives the compiled worker through DuckDB via
 # `haybarn-unittest` 2.0 (install with:
-# `uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'`).
+# `uv tool install --prerelease allow 'haybarn-unittest>=2.0.1rc3,<2.1'`).
 # haybarn-unittest 2.0 isolates $HOME, so --keep-home is required for the
 # installed vgi extension to be found.
 

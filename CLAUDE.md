@@ -18,7 +18,7 @@ for tokenization, SHA-256 for key derivation.
 ## Layout
 
 ```
-Cargo.toml                          workspace; pins vgi = "0.51.0" (vgi.v3 3.3 / haybarn 2.0), arrow 59.2, fpe/aes/sha2/hmac/hex
+Cargo.toml                          workspace; pins vgi = "0.53.2" (vgi.v3 3.3 / haybarn 2.0), arrow 59.2, fpe/aes/sha2/hmac/hex
 crates/mask-worker/
   src/main.rs                       native binary: build_worker().run()
   src/lib.rs                        build_worker(): registers the scalars + catalog metadata; re-exports `mask`
